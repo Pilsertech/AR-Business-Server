@@ -1,0 +1,23 @@
+ar-business-server/
+│  package.json          ← dependency + script manifest
+│  .env                  ← connection strings & secrets
+│
+└─src/                   ← all executable code lives here
+   ├─config/             ← shared, framework‑agnostic helpers
+   │   database.js
+   │
+   ├─models/             ← “M” → Sequelize model classes
+   │   index.js
+   │   ArContent.js
+   │
+   ├─viewModels/         ← “VM” → pure business logic
+   │   arContentVM.js
+   │
+   ├─routes/             ← Express route modules (thin)
+   │   arContentRoutes.js
+   │
+   ├─views/              ← “V” → EJS templates rendered server‑side
+   │   card.ejs
+   │
+   └─app.js              ← Express composition root / boot file
+public/                  ← static assets (uploads, targets, qr images)

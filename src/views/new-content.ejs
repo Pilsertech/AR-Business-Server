@@ -1,0 +1,154 @@
+<% /*  ==========================================================================
+     views/new-content.ejs
+     Form to create a NEW AR content entry
+     Marker upload is now *removed* – only asset & geo inputs remain.
+     ====================================================================== */ %>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add New AR Content</title>
+
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+
+<body>
+  <div class="container">
+    <a href="/dashboard" class="back-link button button-primary">
+      &larr; Back to Dashboard
+    </a>
+
+    <h1>Add New AR Content</h1>
+
+    <form id="newContentForm"
+          action="/dashboard/new"
+          method="POST"
+          enctype="multipart/form-data">
+
+      <!-- 1 ▸ Basic information -->
+      <fieldset>
+        <legend>1. Basic Information</legend>
+
+        <div class="form-group">
+          <label for="title">Title</label>
+          <input id="title" name="title" type="text" required autofocus />
+        </div>
+
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea id="description" name="description" rows="3"></textarea>
+        </div>
+      </fieldset>
+
+      <!-- 2 ▸ AR configuration -->
+      <fieldset>
+        <legend>2. AR Configuration</legend>
+
+        <div class="form-group">
+          <label for="experienceType">Select Experience Type</label>
+          <select id="experienceType" name="experienceType">
+            <option value="marker-model">Marker‑Based · 3D Model</option>
+            <option value="marker-image">Marker‑Based · Image</option>
+            <option value="marker-video">Marker‑Based · Video</option>
+            <option value="geo-model">Location‑Based · 3D Model</option>
+            <option value="geo-image">Location‑Based · Image</option>
+            <option value="geo-video">Location‑Based · Video</option>
+            <option value="face-model">Face Tracking · 3D Model</option>
+          </select>
+        </div>
+      </fieldset>
+
+      <!-- 3 ▸ Upload files -->
+      <fieldset>
+        <legend>3. Upload Files</legend>
+
+        <!-- Asset type selector -->
+        <div class="form-group">
+          <label for="assetType">Select Asset Type</label>
+          <select id="assetType" name="assetType">
+            <option value="">-- Choose Asset Type --</option>
+            <option value="model">3D Model (.glb/.gltf)</option>
+            <option value="image">Image (.jpg/.png)</option>
+            <option value="video">Video (.mp4)</option>
+          </select>
+        </div>
+
+        <!-- Dynamic asset inputs -->
+        <div class="form-group hidden" id="asset-model-group">
+          <label for="assetFileModel">Upload 3D Model</label>
+          <input id="assetFileModel" name="assetFile" type="file" accept=".glb,.gltf" />
+        </div>
+
+        <div class="form-group hidden" id="asset-image-group">
+          <label for="assetFileImage">Upload Image</label>
+          <input id="assetFileImage" name="assetFile" type="file" accept="image/*" />
+        </div>
+
+        <div class="form-group hidden" id="asset-video-group">
+          <label for="assetFileVideo">Upload Video</label>
+          <input id="assetFileVideo" name="assetFile" type="file" accept="video/mp4" />
+        </div>
+
+        <!-- Geo controls (shown only for geo type) -->
+        <div id="geo-controls-group" class="hidden">
+          <div class="form-group">
+            <label for="latitude">GPS Latitude</label>
+            <input id="latitude" name="latitude" type="number" step="any" />
+          </div>
+
+          <div class="form-group">
+            <label for="longitude">GPS Longitude</label>
+            <input id="longitude" name="longitude" type="number" step="any" />
+          </div>
+        </div>
+      </fieldset>
+
+      <!-- 4 ▸ Scene options -->
+      <fieldset>
+        <legend>4. Scene Options</legend>
+
+        <!-- Scene position (X Y Z) -->
+<div class="form-group">
+  <label>Position (X, Y, Z)</label>
+  <div class="position-group">
+    <div>
+      <label for="positionX" class="sub-label">X (Left/Right)</label>
+      <input id="positionX" name="positionX" type="number" step="0.1" value="0" />
+    </div>
+    <div>
+      <label for="positionY" class="sub-label">Y (Up/Down)</label>
+      <input id="positionY" name="positionY" type="number" step="0.1" value="0" />
+    </div>
+    <div>
+      <label for="positionZ" class="sub-label">Z (Forward/Back)</label>
+      <input id="positionZ" name="positionZ" type="number" step="0.1" value="0" />
+    </div>
+  </div>
+</div>
+
+
+        <div class="form-group">
+          <label for="modelScale">Scale (Size)</label>
+          <input id="modelScale" name="modelScale" type="number" step="0.1" value="1.0" required />
+        </div>
+
+        <div class="form-group">
+          <label for="actionButtonText">Button Text (Optional)</label>
+          <input id="actionButtonText" name="actionButtonText" type="text" />
+        </div>
+
+        <div class="form-group">
+          <label for="actionButtonUrl">Button URL (Optional)</label>
+          <input id="actionButtonUrl" name="actionButtonUrl" type="text" />
+        </div>
+      </fieldset>
+
+      <button type="submit" class="button button-primary">Create Content</button>
+    </form>
+  </div>
+
+  <script src="/js/form-logic.js" defer></script>
+</body>
+</html>

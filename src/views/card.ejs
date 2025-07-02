@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#000000" />
+  <title><%= content.title %></title>
+
+  <!-- ▌A‑Frame 1.2.0  (Three r135 – recommended by AR.js) -->
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+
+  <!-- ▌aframe‑extras (gesture + animation) -->
+  <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+  <script src="https://unpkg.com/aframe-gesture-handler-component@1.2.1/dist/aframe-gesture-handler-component.min.js"></script>
+
+  <!-- ▌AR.js 3.4.3 builds (compiled for Three r135) -->
+  <% if (content.experienceType.startsWith('marker')) { %>
+    <script src="https://cdn.jsdelivr.net/npm/ar.js@3.4.3/aframe/build/aframe-ar-nft.js"></script>
+  <% } else if (content.experienceType.startsWith('geo')) { %>
+    <script src="https://cdn.jsdelivr.net/npm/ar.js@3.4.3/aframe/build/aframe-ar-gps.js"></script>
+  <% } else if (content.experienceType.startsWith('face')) { %>
+    <script src="https://cdn.jsdelivr.net/npm/ar.js@3.4.3/aframe/build/aframe-ar.js"></script>
+  <% } %>
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+
+<body>
+  <!-- ▌Loader overlay -->
+  <div id="loader">Loading AR Experience…</div>
+
+  <!-- ▌CTA button (if provided) -->
+  <% if (content.actionButton?.url && content.actionButton?.text) { %>
+    <a class="action-button" href="<%= content.actionButton.url %>" target="_blank">
+      <%= content.actionButton.text %>
+    </a>
+  <% } %>
+
+  <!-- ─────────────────────────── Marker‑based ─────────────────────── -->
+  <% if (content.contentType === 'marker') { %>
+    <a-scene
+      class="ar-scene"
+      vr-mode-ui="enabled: false"
+       renderer="physicallyCorrectLights: true; logarithmicDepthBuffer: true; colorManagement: true;"
+       arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;"
+       gesture-detector>
+
+      <!-- Assets -->
+      <a-assets>
+        <a-asset-item id="asset" src="<%= content.assetUrl %>"
+                      response-type="arraybuffer"></a-asset-item>
+      </a-assets>
+
+      <!-- Lights -->
+      <a-light type="ambient"     color="#999"></a-light>
+      <a-light type="directional" color="#fff" intensity="0.9" position="-1 1 1"></a-light>
+
+      <!-- NFT marker root -->
+      <a-nft type="nft" url="<%= content.targetUrl %>" smooth="true">
+
+        <% if (content.experienceType.endsWith('model')) { %>
+          <a-entity gltf-model="#asset" animation-mixer gesture-handler
+                    scale="<%= content.modelScale %> <%= content.modelScale %> <%= content.modelScale %>"
+                    position="<%= content.positionX %> <%= content.positionY %> <%= content.positionZ %>">
+          </a-entity>
+        <% } else if (content.experienceType.endsWith('image')) { %>
+          <a-image src="#asset" rotation="-90 0 0"
+                   scale="<%= content.modelScale %> <%= content.modelScale %> <%= content.modelScale %>"
+                   position="<%= content.positionX %> <%= content.positionY %> <%= content.positionZ %>">
+          </a-image>
+        <% } else if (content.experienceType.endsWith('video')) { %>
+          <a-video src="#asset" rotation="-90 0 0" width="1.6" height="0.9"
+                   scale="<%= content.modelScale %> <%= content.modelScale %> <%= content.modelScale %>"
+                   position="<%= content.positionX %> <%= content.positionY %> <%= content.positionZ %>">
+          </a-video>
+        <% } %>
+
+      </a-nft>
+
+      <!-- Camera -->
+      <a-entity camera></a-entity>
+    </a-scene>
+  <% } %>
+
+  <!-- ─────────────────────────── Geo‑based ────────────────────────── -->
+  <% if (content.contentType === 'geo') { %>
+    <a-scene
+      embedded
+      renderer="physicallyCorrectLights: true; colorManagement: true;"
+      arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;">
+
+      <a-assets>
+        <a-asset-item id="asset" src="<%= content.assetUrl %>"
+                      response-type="arraybuffer"></a-asset-item>
+      </a-assets>
+
+      <a-light type="ambient" color="#999"></a-light>
+      <a-light type="directional" color="#fff" intensity="0.9" position="-1 1 1"></a-light>
+
+      <% if (content.experienceType.endsWith('model')) { %>
+        <a-entity gltf-model="#asset" animation-mixer
+                  gps-entity-place="latitude: <%= content.latitude %>; longitude: <%= content.longitude %>;"
+                  scale="<%= content.modelScale %> <%= content.modelScale %> <%= content.modelScale %>">
+        </a-entity>
+      <% } else if (content.experienceType.endsWith('image')) { %>
+        <a-image src="#asset"
+                 gps-entity-place="latitude: <%= content.latitude %>; longitude: <%= content.longitude %>;"
+                 scale="<%= content.modelScale %> <%= content.modelScale %> <%= content.modelScale %>">
+        </a-image>
+      <% } else if (content.experienceType.endsWith('video')) { %>
+        <a-video src="#asset" width="16" height="9"
+                 gps-entity-place="latitude: <%= content.latitude %>; longitude: <%= content.longitude %>;"
+                 scale="<%= content.modelScale %> <%= content.modelScale %> <%= content.modelScale %>">
+        </a-video>
+      <% } %>
+
+      <a-camera gps-camera rotation-reader></a-camera>
+    </a-scene>
+  <% } %>
+
+  <!-- ─────────────────────────── Face‑tracking ─────────────────────── -->
+  <% if (content.contentType === 'face') { %>
+    <a-scene
+      embedded
+      renderer="physicallyCorrectLights: true; colorManagement: true;"
+      arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;">
+
+      <a-assets>
+        <a-asset-item id="asset" src="<%= content.assetUrl %>"
+                      response-type="arraybuffer"></a-asset-item>
+      </a-assets>
+
+      <a-light type="ambient" color="#999"></a-light>
+      <a-light type="directional" color="#fff" intensity="0.9" position="-1 1 1"></a-light>
+
+      <a-camera></a-camera>
+
+      <a-entity face-tracker>
+        <a-entity gltf-model="#asset"
+                  position="0 -0.2 0.5"
+                  scale="<%= content.modelScale %> <%= content.modelScale %> <%= content.modelScale %>">
+        </a-entity>
+      </a-entity>
+    </a-scene>
+  <% } %>
+
+  <script src="/js/scene-logic.js" defer></script>
+
+  <!-- NEW: error‑handler moved to an external file to satisfy CSP -->
+  <script src="/js/ar-error-handler.js" defer></script>
+</body>
+</html>
