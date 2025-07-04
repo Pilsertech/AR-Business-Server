@@ -288,3 +288,56 @@ tbody tr:nth-child(even) { background: #fcfcfc; }
 .status-missing { color: var(--danger-color);  font-weight: 600; }
 
 
+/* === AR error modal overlay ======================================== */
+.ar-error-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(13,17,23, 0.88);
+  z-index: 20000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn var(--normal) ease backwards;
+}
+.ar-error-modal-box {
+  background: var(--white);
+  color: var(--dark-gray);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  max-width: 92vw;
+  width: 380px;
+  padding: 2rem 1.5rem 1.25rem 1.5rem;
+  text-align: center;
+  animation: fadeIn var(--fast) ease backwards;
+}
+.ar-error-modal-box h2 {
+  margin: 0 0 1rem 0;
+  color: var(--danger-color);
+}
+.ar-error-modal-message {
+  margin-bottom: 1.1rem;
+  font-size: 1.13rem;
+  word-break: break-word;
+}
+.ar-error-modal-close {
+  background: var(--danger-color);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius);
+  padding: .7rem 2.2rem;
+  font-size: 1.08rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: .4rem;
+  transition: filter var(--fast);
+}
+.ar-error-modal-close:hover,
+.ar-error-modal-close:focus {
+  filter: brightness(1.14);
+  outline: 2px solid var(--primary-color);
+}
+.ar-error-modal-help {
+  color: #6c757d;
+  font-size: .97rem;
+  margin-top: .5rem;
+}

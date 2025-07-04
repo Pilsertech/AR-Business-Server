@@ -1,21 +1,44 @@
-/*  public/js/edit-content.js
-    Tiny helper: warn if user tries to upload only 1‑2 marker files     */
+/*  ========================================================================
+    public/js/edit-content.js
+    • Works with the new edit-content.ejs (multiple .mind files)
+    • Validation:
+        – If user selects files, every file must end with “.mind”.
+    • UI helper: shows selected filenames under the input.
+    ====================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
-  const form  = document.getElementById('editForm');
-  if (!form) return;
+  const form         = document.getElementById('editForm');
+  const fileInput    = form?.querySelector('input[name="markerFiles"]');
+  if (!form || !fileInput) return;          // not a marker‑based edit page
 
-  form.addEventListener('submit', (e) => {
-    const fset  = form.querySelector('input[name="fsetFile"]').files.length;
-    const fset3 = form.querySelector('input[name="fset3File"]').files.length;
-    const iset  = form.querySelector('input[name="isetFile"]').files.length;
+  /* ── Preview list ──────────────────────────────────────────────── */
+  const previewList = document.createElement('ul');
+  previewList.className = 'marker-list preview';
+  fileInput.after(previewList);
 
-    const someFiles = fset + fset3 + iset;
-    const allThree  = fset && fset3 && iset;
+  fileInput.addEventListener('change', () => {
+    previewList.innerHTML = '';             // reset
+    Array.from(fileInput.files).forEach(f => {
+      const li = document.createElement('li');
+      li.textContent = f.name;
+      previewList.appendChild(li);
+    });
+  });
 
-    if (someFiles && !allThree) {
-      alert('Please upload all three marker files (.fset, .fset3, .iset) together.');
-      e.preventDefault();
+  /* ── Submit validation ─────────────────────────────────────────── */
+  form.addEventListener('submit', (ev) => {
+    if (!fileInput.files.length) return;    // nothing to validate
+
+    const bad = Array.from(fileInput.files).filter(f =>
+      !f.name.toLowerCase().endsWith('.mind')
+    );
+
+    if (bad.length) {
+      alert(
+        'One or more selected files are not .mind files:\n' +
+        bad.map(f => '• ' + f.name).join('\n')
+      );
+      ev.preventDefault();
     }
   });
 });

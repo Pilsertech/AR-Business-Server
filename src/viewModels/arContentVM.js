@@ -1,95 +1,118 @@
-/*  ==========================================================================
-    Business Logic – now supports attaching marker files post‑creation
-    ======================================================================= */
+/*  ============================================================================
+    src/viewModels/arContentVM.js
+    Framework‑agnostic business‑logic layer (MindAR compatible)
+    ────────────────────────────────────────────────────────────────────────────
+    • createContent()         – create DB row, save asset, generate QR
+    • updateContentBySlug()   – replace asset, replace marker, update fields
+    • deleteContentBySlug()   – drop DB row + ALL linked files on disk
+    ========================================================================== */
 
-import { ArContent }     from '../models/index.js';
-import { customAlphabet }from 'nanoid';
-import QRCode            from 'qrcode';
-import path              from 'path';
-import fs                from 'fs/promises';
-import { fileURLToPath } from 'url';
+import { ArContent }      from '../models/index.js';
+import { customAlphabet } from 'nanoid';
+import QRCode             from 'qrcode';
+import path               from 'path';
+import fs                 from 'fs/promises';
+import { fileURLToPath }  from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-/* ─── Helpers ──────────────────────────────────────────────────────────── */
-export async function getAllContents(){
-  return ArContent.findAll({ order:[['createdAt','DESC']] });
-}
-export async function getBySlug(slug){
-  return ArContent.findOne({ where:{ slug } });
-}
+/* ─── Helpers ────────────────────────────────────────────────────────────── */
+const id10 = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 10);
 
-/* ─── Create content ───────────────────────────────────────────────────── */
-export async function createContent(payload, files){
-  const slug = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789',10)();
+export const getAllContents = () =>
+  ArContent.findAll({ order: [['createdAt', 'DESC']] });
 
-  /* QR code */
+export const getBySlug = (slug) =>
+  ArContent.findOne({ where: { slug } });
+
+/* ─── CREATE ─────────────────────────────────────────────────────────────── */
+export async function createContent(payload, files) {
+  const slug = id10();
+
+  /* 1 ▸ Generate a QR that opens /card/:slug */
   const qrRel = `/qr/${slug}.png`;
-  const qrAbs = path.join(__dirname,'../../public',qrRel);
-  const card  = `${process.env.BASE_URL}/card/${slug}`;
-  await QRCode.toFile(qrAbs, card, { width:300, margin:2 });
+  await QRCode.toFile(
+    path.join(__dirname, '../../public', qrRel),
+    `${process.env.BASE_URL}/card/${slug}`,
+    { width: 300, margin: 2 }
+  );
 
-  const [arType] = payload.experienceType.split('-');
+  /* 2 ▸ Persist DB record */
+  const [arType] = payload.experienceType.split('-'); // marker | geo | face
 
-  const content = await ArContent.create({
+  return ArContent.create({
     ...payload,
     slug,
-    contentType: arType,
-    qrCodeUrl : qrRel,
-    targetUrl : null,   // marker files added later
-    assetUrl  : files.assetFile
-                 ? `/uploads/${files.assetFile[0].filename}`
-                 : null
+    contentType : arType,
+    qrCodeUrl   : qrRel,
+    markerFiles : [],                                    // ← empty array
+    assetUrl    : files.assetFile?.length
+                   ? `/uploads/${files.assetFile[0].filename}`
+                   : null
   });
-  return content;
 }
 
-/* ─── Attach NFT marker files AFTER QR conversion ─────────────────────── */
-/**
- * Link new NFT marker files to a record (optional).
- * If the user did not upload any of the three files, this is a no‑op.
- */
-export async function attachMarkerFiles(slug, files) {
-  // If zero files were uploaded, silently skip
-  const uploaded = (files.fsetFile || []).length +
-                   (files.fset3File || []).length +
-                   (files.isetFile || []).length;
-  if (uploaded === 0) return;
+/* ─── UPDATE ─────────────────────────────────────────────────────────────── */
+export async function updateContentBySlug(slug, body, files) {
+  const content = await getBySlug(slug);
+  if (!content) throw new Error('Content not found.');
 
-  // All three must be present, otherwise abort
-  if (!(files.fsetFile && files.fset3File && files.isetFile)) {
-    throw new Error('All three marker files are required when replacing the marker.');
+  /* 1 ▸ Replace asset (optional) */
+  if (files.assetFile?.length) {
+    await safeUnlink(content.assetUrl);
+    content.assetUrl = `/uploads/${files.assetFile[0].filename}`;
   }
 
-  const content = await getBySlug(slug);
-  if (!content) throw new Error('Content not found');
+  /* 2 ▸ Replace marker (optional) – keep ONE *.mind per record */
+  if (files.markerFiles?.length) {
+    /* delete previous .mind (if any) */
+    await Promise.all(markerRelPaths(content.markerFiles).map(safeUnlink));
 
-  const baseName = files.fsetFile[0].originalname.replace('.fset', '');
-  content.targetUrl = `/targets/${baseName}`;
+    /* store the new filename */
+    content.markerFiles = [ files.markerFiles[0].filename ];  // array → JSON by setter
+  }
+
+  /* 3 ▸ Scalar fields & optional button */
+  content.positionX  = body.positionX;
+  content.positionY  = body.positionY;
+  content.positionZ  = body.positionZ;
+  content.modelScale = body.modelScale;
+
+  content.actionButton = (body.actionButtonText && body.actionButtonUrl)
+    ? { text: body.actionButtonText, url: body.actionButtonUrl }
+    : null;
+
   await content.save();
 }
 
-
-/* ─── Delete content & files ───────────────────────────────────────────── */
-export async function deleteContentBySlug(slug){
+/* ─── DELETE ─────────────────────────────────────────────────────────────── */
+export async function deleteContentBySlug(slug) {
   const content = await getBySlug(slug);
-  if(!content) throw new Error('Content not found');
+  if (!content) throw new Error('Content not found.');
 
   const rels = [
     content.assetUrl,
     content.qrCodeUrl,
-    content.targetUrl && `${content.targetUrl}.fset`,
-    content.targetUrl && `${content.targetUrl}.fset3`,
-    content.targetUrl && `${content.targetUrl}.iset`
+    ...markerRelPaths(content.markerFiles)
   ].filter(Boolean);
 
-  for(const rel of rels){
-    try{
-      await fs.unlink(path.join(__dirname,'../../public',rel));
-      console.log('🗑️ deleted',rel);
-    }catch(err){
-      console.warn('⚠️ unable to delete',rel,err.message);
-    }
-  }
+  await Promise.all(rels.map(safeUnlink));
   await content.destroy();
+}
+
+/* ─── Utility helpers ────────────────────────────────────────────────────── */
+function markerRelPaths(list) {
+  const arr = Array.isArray(list) ? list : JSON.parse(list || '[]');
+  return arr.map(filename => `/targets/${filename}`);
+}
+
+async function safeUnlink(relPath) {
+  if (!relPath) return;
+  try {
+    await fs.unlink(path.join(__dirname, '../../public', relPath));
+    console.log('🗑️  deleted', relPath);
+  } catch (err) {
+    // file may already be gone – warn but don’t crash
+    console.warn('⚠️  unable to delete', relPath, err.message);
+  }
 }

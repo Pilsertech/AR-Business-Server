@@ -1,0 +1,19 @@
+✅ Checklist for libraries:
+ all six scripts in public/vendor/:
+
+aframe.min.js
+
+aframe-extras.min.js
+
+aframe-gesture-handler.min.js
+
+aframe-ar.js
+
+aframe-ar-nft.js
+
+aframe-ar-gps.js
+
+
+..........................USES OF EACH FILE...........................................
+ src/routes/arContentRoutes.js => It serves  a correct client side page Depending on  
+                               type of AR content requested via QR code link   

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title><%= content.title %></title>
+    
+    <script src="/vendor/MindAR/aframe.min.js"></script>
+    <script src="/vendor/MindAR/mindar-image-aframe.prod.js"></script>
+    
+    <link rel="stylesheet" href="/css/style.css" />
+  </head>
+  <body>
+    <div id="loader">Loading AR Experience…</div>
+    <% if (content.actionButton?.url && content.actionButton?.text) { %>
+        <a class="action-button button button-primary" href="<%= content.actionButton.url %>" target="_blank"><%= content.actionButton.text %></a>
+    <% } %>
+
+    <a-scene mindar-image="imageTargetSrc: <%= content.targetUrl %>; autoStart: false" color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+      <a-assets>
+        <a-asset-item id="asset" src="<%= content.assetUrl %>"></a-asset-item>
+      </a-assets>
+
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+      <a-entity mindar-image-target="targetIndex: 0">
+
+
+        <a-gltf-model 
+            src="#asset" 
+            rotation="0 0 0" 
+            position="<%= content.positionX %> <%= content.positionY %> <%= content.positionZ %>" 
+            scale="<%= content.modelScale %> <%= content.modelScale %> <%= content.modelScale %>"
+            animation-mixer>
+        </a-gltf-model>
+
+
+      </a-entity>
+    </a-scene>
+
+    <script src="/js/scene-logic.js" defer></script>
+  </body>
+</html>

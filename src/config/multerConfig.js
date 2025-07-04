@@ -1,23 +1,29 @@
-//  ==========================================================================
-//  Multer config – saves marker files (.fset, .fset3, .iset) to /targets
-//  ==========================================================================
-
+// ────────────────────────────────────────────────────────────────────────────
+//  src/config/multerConfig.js  –  unified Multer storage
+// ────────────────────────────────────────────────────────────────────────────
 import multer from 'multer';
 import path   from 'path';
 
-const markerFields = ['fsetFile','fset3File','isetFile'];
-
 const storage = multer.diskStorage({
+  /* 1 ▸ target folder */
   destination: (req, file, cb) => {
-    cb(null, markerFields.includes(file.fieldname) ? 'public/targets'
-                                                   : 'public/uploads');
+    const isMarker = file.fieldname === 'markerFiles' || file.fieldname === 'targetFile';
+    cb(null, isMarker ? 'public/targets' : 'public/uploads');
   },
+
+  /* 2 ▸ filename rule */
   filename: (req, file, cb) => {
-    if (markerFields.includes(file.fieldname)) {
-      return cb(null, file.originalname);        // AR.js needs original names
+    const ext = path.extname(file.originalname).toLowerCase();
+    const stamp = Date.now() + '-' + Math.round(Math.random() * 1e9);
+
+    /* marker → use slug when we have it (edit route), fallback to “marker” */
+    if (file.fieldname === 'markerFiles' || file.fieldname === 'targetFile') {
+      const base = (req.params && req.params.slug) ? req.params.slug : 'marker';
+      return cb(null, `${base}-${stamp}${ext}`);        // e.g. 8ahk3fa0jy‑…​.mind
     }
-    const id = Date.now() + '-' + Math.round(Math.random()*1e9);
-    cb(null, `${file.fieldname}-${id}${path.extname(file.originalname)}`);
+
+    /* everything else (asset / image / video / model) */
+    cb(null, `${file.fieldname}-${stamp}${ext}`);       // assetFile‑123‑….glb
   }
 });
 

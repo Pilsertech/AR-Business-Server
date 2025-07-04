@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title><%= content.title %></title>
+
+  <!-- LOCAL A‑Frame (Three r135 – matches AR.js build) -->
+  <script src="/vendor/AR-js/aframe.min.js"></script>
+
+  <!-- LOCAL AR.js “location‑only” plug‑in -->
+  <script src="/vendor/AR-js/aframe-ar-location-only.js"></script>
+
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+
+<body>
+  <!-- Loader while assets / camera initialise -->
+  <div id="loader">Loading AR Experience…</div>
+
+  <!-- Optional call‑to‑action button -->
+  <% if (content.actionButton?.url && content.actionButton?.text) { %>
+    <a href="<%= content.actionButton.url %>" target="_blank"
+       class="action-button button button-primary">
+      <%= content.actionButton.text %>
+    </a>
+  <% } %>
+
+  <!-- ── A‑Frame Scene ─────────────────────────────────────────────── -->
+  <a-scene
+      class="ar-scene"
+      vr-mode-ui="enabled: false"
+      renderer="physicallyCorrectLights: true; colorManagement: true;"
+      arjs="sourceType: webcam; videoTexture: true; debugUIEnabled: false;">
+
+    <!-- ▸ Pre‑load the video (UN‑muted) -->
+    <a-assets>
+      <video id="asset"
+             src="<%= content.assetUrl %>"
+             loop
+             autoplay           <!-- browsers will pause audio until user taps -->
+             playsinline
+             crossorigin="anonymous">
+      </video>
+    </a-assets>
+
+    <!-- ▸ Simple ambient + directional lighting -->
+    <a-light type="ambient"     color="#999"></a-light>
+    <a-light type="directional" color="#fff" intensity="0.9" position="0 50 20"></a-light>
+
+    <!-- ▸ GPS‑enabled camera -->
+    <a-camera gps-camera rotation-reader></a-camera>
+
+    <!-- ▸ Video entity fixed to real‑world coordinates -->
+    <a-video  src="#asset"
+              width="16" height="9"
+              scale="<%= content.modelScale %> <%= content.modelScale %> <%= content.modelScale %>"
+              gps-entity-place="latitude: <%= content.latitude %>; longitude: <%= content.longitude %>">
+    </a-video>
+
+  </a-scene>
+
+  <!-- Hide loader + basic error handling -->
+  <script src="/js/scene-logic.js" defer></script>
+  <script src="/js/ar-error-handler.js" defer></script>
+</body>
+</html>

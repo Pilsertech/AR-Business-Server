@@ -1,21 +1,42 @@
 /*  ============================================================================
     public/js/dashboard.js
-    Handles all interactive behaviour on the Admin Dashboard page
-    ---------------------------------------------------------------------------
-    ① Intercepts every “delete” form and shows a confirmation alert.
-    ② Uses event delegation, so it still works if rows are added dynamically.
+    • Confirms deletion of any item on the dashboard table
+    • Works via event delegation so it handles future rows without rebind
     ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Event delegation on <tbody> keeps the handler lightweight
-    const tbody = document.querySelector('table tbody');
-    if (!tbody) return;
+  const tbody = document.querySelector('table tbody');
+  if (!tbody) return;
 
-    tbody.addEventListener('submit', (evt) => {
-        const form = evt.target.closest('form[data-delete]');
-        if (!form) return; // not a delete form
+  /**
+   * Helper — returns the row’s <td> text for the title column
+   * (assumes Title is the first cell, as in dashboard.ejs)
+   */
+  const getRowTitle = (row) => {
+    const firstCell = row?.querySelector('td');
+    return firstCell ? firstCell.textContent.trim() : 'this item';
+  };
 
-        const ok = confirm('Are you sure you want to delete this item?');
-        if (!ok) evt.preventDefault(); // user cancelled
-    });
+  /* Handle delete form submission */
+  tbody.addEventListener('submit', (evt) => {
+    const form = evt.target.closest('form[data-delete]');
+    if (!form) return;                          // not a delete form
+
+    const title = getRowTitle(form.closest('tr'));
+    const ok = confirm(`Delete “${title}”?\nThis action cannot be undone.`);
+
+    if (!ok) evt.preventDefault();
+  });
+
+  /* Also intercept Enter key on styled delete buttons (accessibility) */
+  tbody.addEventListener('keydown', (evt) => {
+    if (evt.key !== 'Enter') return;
+
+    const form = evt.target.closest('form[data-delete]');
+    if (!form) return;
+
+    const title = getRowTitle(form.closest('tr'));
+    const ok = confirm(`Delete “${title}”?\nThis action cannot be undone.`);
+    if (!ok) evt.preventDefault();
+  });
 });

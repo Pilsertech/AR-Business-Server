@@ -1,34 +1,43 @@
-/*  =========================================================================
+/*  ============================================================================
     public/js/form-logic.js
-    Dynamic show/hide for asset type + geo inputs (marker logic removed)
-    ===================================================================== */
+    Controls dynamic visibility of:
+    – Asset upload fields (model/image/video)
+    – GPS inputs (only shown when geo-* is selected)
+    Marker uploads are not handled here (handled in edit page only)
+    ========================================================================== */
 
 document.addEventListener('DOMContentLoaded', () => {
-  const exp   = document.getElementById('experienceType');
-  const asset = document.getElementById('assetType');
+  const experienceType = document.getElementById('experienceType');
+  const assetType      = document.getElementById('assetType');
 
-  const grp   = {
-    model : document.getElementById('asset-model-group'),
-    image : document.getElementById('asset-image-group'),
-    video : document.getElementById('asset-video-group'),
-    geo   : document.getElementById('geo-controls-group')
+  const groups = {
+    model: document.getElementById('asset-model-group'),
+    image: document.getElementById('asset-image-group'),
+    video: document.getElementById('asset-video-group'),
+    geo:   document.getElementById('geo-controls-group')
   };
 
-  const toggle = (el, show) => el.classList.toggle('hidden', !show);
+  const toggleVisibility = (element, shouldShow) => {
+    if (element) element.classList.toggle('hidden', !shouldShow);
+  };
 
-  function updateAsset() {
-    toggle(grp.model, asset.value === 'model');
-    toggle(grp.image, asset.value === 'image');
-    toggle(grp.video, asset.value === 'video');
+  function updateAssetVisibility() {
+    toggleVisibility(groups.model, assetType.value === 'model');
+    toggleVisibility(groups.image, assetType.value === 'image');
+    toggleVisibility(groups.video, assetType.value === 'video');
   }
 
-  function updateGeo() {
-    toggle(grp.geo, exp.value.startsWith('geo'));
+  function updateGeoVisibility() {
+    toggleVisibility(groups.geo, experienceType.value.startsWith('geo'));
   }
 
-  asset.addEventListener('change', updateAsset);
-  exp  .addEventListener('change', () => { updateAsset(); updateGeo(); });
+  assetType.addEventListener('change', updateAssetVisibility);
+  experienceType.addEventListener('change', () => {
+    updateAssetVisibility();
+    updateGeoVisibility();
+  });
 
-  /* initial state */
-  updateAsset(); updateGeo();
+  // Initial state on page load
+  updateAssetVisibility();
+  updateGeoVisibility();
 });

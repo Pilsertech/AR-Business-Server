@@ -1,14 +1,8 @@
-<% /*  ==========================================================================
-     views/new-content.ejs
-     Form to create a NEW AR content entry
-     Marker upload is now *removed* – only asset & geo inputs remain.
-     ====================================================================== */ %>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Add New AR Content</title>
 
   <link rel="stylesheet" href="/css/style.css" />
@@ -64,7 +58,7 @@
       <fieldset>
         <legend>3. Upload Files</legend>
 
-        <!-- Asset type selector -->
+        <!-- Asset‑type selector -->
         <div class="form-group">
           <label for="assetType">Select Asset Type</label>
           <select id="assetType" name="assetType">
@@ -91,7 +85,7 @@
           <input id="assetFileVideo" name="assetFile" type="file" accept="video/mp4" />
         </div>
 
-        <!-- Geo controls (shown only for geo type) -->
+        <!-- Geo inputs (only when experienceType starts with 'geo') -->
         <div id="geo-controls-group" class="hidden">
           <div class="form-group">
             <label for="latitude">GPS Latitude</label>
@@ -109,25 +103,24 @@
       <fieldset>
         <legend>4. Scene Options</legend>
 
-        <!-- Scene position (X Y Z) -->
-<div class="form-group">
-  <label>Position (X, Y, Z)</label>
-  <div class="position-group">
-    <div>
-      <label for="positionX" class="sub-label">X (Left/Right)</label>
-      <input id="positionX" name="positionX" type="number" step="0.1" value="0" />
-    </div>
-    <div>
-      <label for="positionY" class="sub-label">Y (Up/Down)</label>
-      <input id="positionY" name="positionY" type="number" step="0.1" value="0" />
-    </div>
-    <div>
-      <label for="positionZ" class="sub-label">Z (Forward/Back)</label>
-      <input id="positionZ" name="positionZ" type="number" step="0.1" value="0" />
-    </div>
-  </div>
-</div>
-
+        <!-- Position (X Y Z) -->
+        <div class="form-group">
+          <label>Position (X, Y, Z)</label>
+          <div class="position-group">
+            <div>
+              <label for="positionX" class="sub-label">X</label>
+              <input id="positionX" name="positionX" type="number" step="0.1" value="0" />
+            </div>
+            <div>
+              <label for="positionY" class="sub-label">Y</label>
+              <input id="positionY" name="positionY" type="number" step="0.1" value="0" />
+            </div>
+            <div>
+              <label for="positionZ" class="sub-label">Z</label>
+              <input id="positionZ" name="positionZ" type="number" step="0.1" value="0" />
+            </div>
+          </div>
+        </div>
 
         <div class="form-group">
           <label for="modelScale">Scale (Size)</label>
@@ -135,20 +128,23 @@
         </div>
 
         <div class="form-group">
-          <label for="actionButtonText">Button Text (Optional)</label>
+          <label for="actionButtonText">Button Text (Optional)</label>
           <input id="actionButtonText" name="actionButtonText" type="text" />
         </div>
 
         <div class="form-group">
-          <label for="actionButtonUrl">Button URL (Optional)</label>
+          <label for="actionButtonUrl">Button URL (Optional)</label>
           <input id="actionButtonUrl" name="actionButtonUrl" type="text" />
         </div>
       </fieldset>
 
-      <button type="submit" class="button button-primary">Create Content</button>
+      <button type="submit" class="button button-primary">
+        Create Content
+      </button>
     </form>
   </div>
 
+  <!-- Behaviour (shows/hides inputs) -->
   <script src="/js/form-logic.js" defer></script>
 </body>
 </html>

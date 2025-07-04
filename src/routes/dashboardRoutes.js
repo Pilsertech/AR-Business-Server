@@ -1,3 +1,7 @@
+// ────────────────────────────────────────────────────────────────────────────
+//  src/routes/dashboardRoutes.js
+//  All routes behind /dashboard/*  (protected by requireLogin)
+// ────────────────────────────────────────────────────────────────────────────
 import { Router } from 'express';
 import { upload } from '../config/multerConfig.js';
 import {
@@ -5,14 +9,14 @@ import {
   getBySlug,
   createContent,
   deleteContentBySlug,
-  attachMarkerFiles,
+  updateContentBySlug            // NEW import
 } from '../viewModels/arContentVM.js';
 import { requireLogin } from '../middleware/authMiddleware.js';
 
 const router = Router();
 router.use(requireLogin);
 
-/* ─── Dashboard list ──────────────────────────────────────────────── */
+/* ─── Dashboard list ─────────────────────────────────────────────────────── */
 router.get('/', async (req, res, next) => {
   try {
     const contents = await getAllContents();
@@ -20,8 +24,8 @@ router.get('/', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-/* ─── Add new content ─────────────────────────────────────────────── */
-router.get('/new', (req, res) => res.render('new-content'));
+/* ─── Add new content ────────────────────────────────────────────────────── */
+router.get('/new', (_req, res) => res.render('new-content'));
 
 router.post(
   '/new',
@@ -34,7 +38,7 @@ router.post(
           ...b,
           actionButton: b.actionButtonText && b.actionButtonUrl
             ? { text: b.actionButtonText, url: b.actionButtonUrl }
-            : null,
+            : null
         },
         req.files
       );
@@ -43,46 +47,31 @@ router.post(
   }
 );
 
-/* ─── Edit content (GET) ──────────────────────────────────────────── */
+/* ─── Edit content – show form ───────────────────────────────────────────── */
 router.get('/edit/:slug', async (req, res, next) => {
   try {
     const content = await getBySlug(req.params.slug);
-    if (!content) return res.status(404).send('Not found');
+    if (!content) return res.status(404).send('Content not found');
     res.render('edit-content', { content });
   } catch (err) { next(err); }
 });
 
-/* ─── Edit content (POST) – update scene + optional marker replace ── */
+/* ─── Edit content – handle submit ───────────────────────────────────────── */
 router.post(
   '/edit/:slug',
   upload.fields([
-    { name: 'fsetFile',  maxCount: 1 },
-    { name: 'fset3File', maxCount: 1 },
-    { name: 'isetFile',  maxCount: 1 },
+    
+    { name: 'markerFiles', maxCount: 1 } // one .mind file
   ]),
   async (req, res, next) => {
     try {
-      const slug = req.params.slug;
-      const b    = req.body;
-
-      /* 1. update simple fields */
-      await attachMarkerFiles(slug, req.files);      // no‑op if no files
-      const content = await getBySlug(slug);
-      content.positionX   = b.positionX;
-      content.positionY   = b.positionY;
-      content.positionZ   = b.positionZ;
-      content.modelScale  = b.modelScale;
-      content.actionButton= (b.actionButtonText && b.actionButtonUrl)
-        ? { text: b.actionButtonText, url: b.actionButtonUrl }
-        : null;
-      await content.save();
-
+      await updateContentBySlug(req.params.slug, req.body, req.files);
       res.redirect('/dashboard');
     } catch (err) { next(err); }
   }
 );
 
-/* ─── Delete content ──────────────────────────────────────────────── */
+/* ─── Delete content ─────────────────────────────────────────────────────── */
 router.post('/delete/:slug', async (req, res, next) => {
   try {
     await deleteContentBySlug(req.params.slug);

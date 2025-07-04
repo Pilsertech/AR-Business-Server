@@ -1,14 +1,19 @@
+<% /*  =========================================================================
+     views/dashboard.ejs
+     Admin list with marker status & action buttons
+     ========================================================================= */ %>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Admin Dashboard</title>
-
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 
 <body>
+  <!-- Header -->
   <div class="header">
     <h1>AR Content Dashboard</h1>
     <div class="header-buttons">
@@ -17,6 +22,7 @@
     </div>
   </div>
 
+  <!-- Table -->
   <table>
     <thead>
       <tr>
@@ -29,46 +35,49 @@
     </thead>
 
     <tbody>
-    <% if (contents.length) { contents.forEach(item => { %>
-      <tr>
-        <td title="<%= item.description || '' %>"><%= item.title %></td>
-        <td><%= item.assetType %></td>
-        <td><%= item.contentType %></td>
+      <% if (!contents.length) { %>
+        <tr><td colspan="5" style="text-align:center;padding:2rem;">No AR content yet.</td></tr>
+      <% } %>
 
-        <!-- Show status only for marker‑based; dash otherwise -->
-        <td>
-          <% if (item.contentType === 'marker') { %>
-            <% if (item.targetUrl) { %>
-              <span class="status-ok">Uploaded</span>
-            <% } else { %>
-              <span class="status-missing">Missing</span>
-            <% } %>
-          <% } else { %>
-            —
-          <% } %>
-        </td>
+      <% contents.forEach(item => { %>
+        <tr>
+          <!-- Title (tooltip = description) -->
+          <td title="<%= item.description || '' %>"><%= item.title %></td>
 
-        <!-- Button group -->
-        <td>
-          <div class="btn-group">
-            <a class="btn qr-btn"   href="<%= item.qrCodeUrl %>" download>Download QR</a>
-            <a class="btn edit-btn" href="/dashboard/edit/<%= item.slug %>">Edit</a>
+          <td><%= item.assetType %></td>
+          <td><%= item.contentType %></td>
 
-            <form action="/dashboard/delete/<%= item.slug %>"
-                  method="POST"
-                  data-delete>
-              <button type="submit" class="btn delete-btn">Delete</button>
-            </form>
-          </div>
-        </td>
-      </tr>
-    <% }) } else { %>
-      <tr>
-        <td colspan="5" style="text-align:center; padding:2rem;">
-          No AR content yet.
-        </td>
-      </tr>
+          <!-- Marker status -->
+          <!-- Marker status (file shown if uploaded) -->
+<td>
+  <% if (item.contentType === 'marker') { %>
+    <% const files = Array.isArray(item.markerFiles)
+         ? item.markerFiles
+         : JSON.parse(item.markerFiles || '[]'); %>
+
+    <% if (files.length) { %>
+      <span class="status-ok"><%= files[0] %></span>
+    <% } else { %>
+      <span class="status-missing">Missing</span>
     <% } %>
+  <% } else { %> — <% } %>
+</td>
+
+
+
+          <!-- Action buttons -->
+          <td>
+            <div class="btn-group">
+              <a class="btn edit-btn" href="/dashboard/edit/<%= item.slug %>">Edit</a>
+              <a class="btn qr-btn"   href="<%= item.qrCodeUrl %>" download>Download QR</a>
+
+              <form action="/dashboard/delete/<%= item.slug %>" method="POST" data-delete>
+                <button type="submit" class="btn delete-btn">Delete</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+      <% }) %>
     </tbody>
   </table>
 

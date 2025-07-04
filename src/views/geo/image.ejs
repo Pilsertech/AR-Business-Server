@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%= content.title %></title>
+    
+    
+    <script src="/vendor/AR-js/aframe-ar-location-only.js"></script> <link rel="stylesheet" href="/css/style.css" />
+</head>
+
+<body>
+    <div id="loader">Loading AR Experience…</div>
+
+    <% if (content.actionButton?.url && content.actionButton?.text) { %>
+        <a class="action-button button button-primary" href="<%= content.actionButton.url %>" target="_blank">
+            <%= content.actionButton.text %>
+        </a>
+    <% } %>
+
+    <a-scene
+        class="ar-scene"
+        vr-mode-ui="enabled: false"
+        renderer="physicallyCorrectLights: true; logarithmicDepthBuffer: true; colorManagement: true;"
+        arjs-location-based>
+
+        <a-assets>
+            <img id="asset" src="<%= content.assetUrl %>">
+        </a-assets>
+
+        <a-light type="ambient" color="#999"></a-light>
+        <a-light type="directional" color="#fff" intensity="0.9" position="0 50 20"></a-light>
+        
+        <a-camera gps-camera rotation-reader></a-camera>
+
+        <a-image
+     src="#asset"
+     scale="<%= content.modelScale %> <%= content.modelScale %> <%= content.modelScale %>"
+     gps-entity-place="latitude: <%= content.latitude %>; longitude: <%= content.longitude %>;">
+       </a-image>
+
+
+    </a-scene>
+
+    <script src="/js/scene-logic.js" defer></script>
+</body>
+</html>

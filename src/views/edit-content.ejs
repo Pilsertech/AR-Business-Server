@@ -1,7 +1,6 @@
 <% /*  =========================================================================
-     Edit existing AR content – update Scene Options or replace marker files
-     Route: /dashboard/edit/:slug     (GET & POST handlers in dashboardRoutes.js)
-     ====================================================================== */ %>
+     views/edit-content.ejs – edit scene + replace single .mind marker
+     ========================================================================= */ %>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -9,13 +8,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Edit – <%= content.title %></title>
-
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 
 <body>
   <div class="container">
-    <a href="/dashboard" class="back-link button button-primary">&larr; Dashboard</a>
+    <a href="/dashboard" class="back-link button button-primary">&larr; Dashboard</a>
     <h1>Edit AR Content</h1>
 
     <form id="editForm"
@@ -23,67 +21,71 @@
           method="POST"
           enctype="multipart/form-data">
 
-      <!-- 1 ▸ Scene options (position, scale) ------------------------ -->
+      <!-- ▸ Scene options ------------------------------------------------ -->
       <fieldset>
         <legend>Scene Options</legend>
 
         <div class="form-group">
-          <label>Position (X, Y, Z)</label>
+          <label>Position (X Y Z)</label>
           <div class="position-group">
-            <div>
-              <label class="sub-label" for="positionX">X</label>
-              <input type="number" step="0.1" id="positionX" name="positionX"
-                     value="<%= content.positionX %>" />
-            </div>
-            <div>
-              <label class="sub-label" for="positionY">Y</label>
-              <input type="number" step="0.1" id="positionY" name="positionY"
-                     value="<%= content.positionY %>" />
-            </div>
-            <div>
-              <label class="sub-label" for="positionZ">Z</label>
-              <input type="number" step="0.1" id="positionZ" name="positionZ"
-                     value="<%= content.positionZ %>" />
-            </div>
+            <% ['X','Y','Z'].forEach(axis => { const key = 'position' + axis; %>
+              <div>
+                <label class="sub-label" for="<%= key %>"><%= axis %></label>
+                <input id="<%= key %>" name="<%= key %>" type="number" step="0.1"
+                       value="<%= content[key] %>" />
+              </div>
+            <% }) %>
           </div>
         </div>
 
         <div class="form-group">
           <label for="modelScale">Scale (Size)</label>
-          <input type="number" step="0.1" id="modelScale" name="modelScale"
-                 value="<%= content.modelScale %>" required>
+          <input id="modelScale" name="modelScale" type="number" step="0.1"
+                 value="<%= content.modelScale %>" required />
         </div>
       </fieldset>
 
-      <!-- 2 ▸ Action button (optional) ------------------------------- -->
+      <!-- ▸ Optional button --------------------------------------------- -->
       <fieldset>
         <legend>Action Button (Optional)</legend>
         <div class="form-group">
           <label for="actionButtonText">Button Text</label>
-          <input type="text" id="actionButtonText" name="actionButtonText"
-                 value="<%= content.actionButton?.text || '' %>">
+          <input id="actionButtonText" name="actionButtonText" type="text"
+                 value="<%= content.actionButton?.text || '' %>" />
         </div>
         <div class="form-group">
           <label for="actionButtonUrl">Button URL</label>
-          <input type="text" id="actionButtonUrl" name="actionButtonUrl"
-                 value="<%= content.actionButton?.url || '' %>">
+          <input id="actionButtonUrl" name="actionButtonUrl" type="text"
+                 value="<%= content.actionButton?.url || '' %>" />
         </div>
       </fieldset>
 
-      <!-- 3 ▸ Replace NFT marker (optional) -------------------------- -->
+      <!-- ▸ Marker management (marker experiences only) ----------------- -->
       <% if (content.contentType === 'marker') { %>
       <fieldset>
-        <legend>Replace Marker Files (.fset / .fset3 / .iset)</legend>
-        <p class="help-text">Upload all three files to replace the current marker.</p>
+        <legend>Marker File (.mind)</legend>
+
+        <!-- show current marker -->
+        <% const current = Array.isArray(content.markerFiles)
+             ? content.markerFiles
+             : JSON.parse(content.markerFiles || '[]'); %>
+
+        <% if (current.length) { %>
+          <p class="help-text">Current marker:</p>
+          <ul class="marker-list">
+            <li><%= current[0] %></li>
+          </ul>
+        <% } else { %>
+          <p class="help-text">No marker uploaded yet.</p>
+        <% } %>
+
+        <p class="help-text">
+          Upload a new <code>.mind</code> file to replace the existing one.
+        </p>
 
         <div class="form-group">
-          <input type="file" name="fsetFile"  accept=".fset">
-        </div>
-        <div class="form-group">
-          <input type="file" name="fset3File" accept=".fset3">
-        </div>
-        <div class="form-group">
-          <input type="file" name="isetFile"  accept=".iset">
+          <!-- single file only -->
+          <input type="file" name="markerFiles" accept=".mind" />
         </div>
       </fieldset>
       <% } %>

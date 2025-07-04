@@ -1,0 +1,54 @@
+D:\AAAAAA\ar-business-server\public\vendor\MindAR   
+
+NB.>This folder is for MindAR 
+  NB.> UPDATES FOR MindAR => https://github.com/hiukim/mind-ar-js/releases
+
+          FEATURES:
+
+NFT/image marker tracking, face tracking, 
+supports multiple markers, works with A-Frame and Three.js
+
+            PROS:
+
+=>Active development, great documentation
+=>Excellent NFT marker/image tracking (works well for business cards, posters, etc.)
+=>Lightweight, good performance on mobile and desktop
+=>Easy integration with A-Frame for declarative AR scenes
+=>Pure client-side (no server needed for processing markers)
+
+          CORNS:
+
+=>No geo/location AR (purely visual marker/face-based)
+=>Best for: Business cards, packaging, print ads, branded AR
+
+...................................................................................................................
+...................................................................................................................
+..............................VERSIONS IN THIS FOLDER..............................................................
+...................................................................................................................
+    =>aframe.min.js ================== 1.5.0
+    =>mindar-image-aframe.prod.js ===== 1.2.5 //FOR IMAGE TRACKING
+    =>mindar-face-aframe.prod.js ====== 1.2.5 //FOR FACE TRACKING
+.....................................................................................................................
+.....................................................................................................................
+
+  
+
+         
+
+         MindAR WebAssembly Files
+
+     1. mindar-image-worker.js
+     2. mindar-image-worker.wasm
+     3. mindar-image-worker.wasm.js
+     4. mindar-image-worker.simd.wasm
+
+
+=>MindAR.js uses WebAssembly (WASM) technology for its core 
+image tracking engine.
+=>WebAssembly is a binary format that runs at near-native speed 
+in browsers, making AR tracking fast and efficient—especially
+ on mobile devices.
+
+=>These WASM files are required for image (NFT) tracking to work.
+ When you use MindAR.js (or the A-Frame binding), these files are 
+loaded dynamically by the library at runtime.

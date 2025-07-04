@@ -31,7 +31,17 @@ app.use(
           "cdn.jsdelivr.net",
           "unpkg.com",
           "raw.githack.com",
+          "blob:", 
+          "overbridgenet.com" 
         ],
+
+        connectSrc: [
+      "'self'",
+      "https://www.google-analytics.com",
+      "https://overbridgenet.com"
+      // only add other domains you trust!
+      ],
+
       },
     },
   })
@@ -63,6 +73,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 app.use('/targets', express.static(path.join(__dirname, '../public/targets')));
 app.use('/qr', express.static(path.join(__dirname, '../public/qr')));
 app.use('/js', express.static(path.join(__dirname, '../public/js')));
+app.use('/vendor', express.static(path.join(__dirname, '../public/vendor')));
 
 /* ── View engine (EJS) ─────────────────────────────────── */
 app.set('views', path.join(__dirname, 'views'));
@@ -110,10 +121,14 @@ app.use((err, _req, res, _next) => {
       console.log('✅ Default admin user created: admin@example.com');
     }
 
-    const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () =>
-      console.log(`🚀 Server listening on http://localhost:${PORT}`)
-    );
+    // This specifically reads the port from your .env file
+const APP_PORT = process.env.PORT; 
+
+// The server will now listen on the port you defined, defaulting to 5000 if it's not found.
+app.listen(APP_PORT, () =>
+  console.log(`🚀 Server listening on http://localhost:${APP_PORT}`)
+);
+    
   } catch (e) {
     console.error('❌ DB connection failed:', e);
     process.exit(1);
