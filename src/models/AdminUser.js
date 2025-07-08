@@ -22,12 +22,24 @@ const AdminUser = sequelize.define('AdminUser', {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  // NEW: Locked flag
+  locked: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  }
 }, {
   tableName: 'admin_users',
   timestamps: true,
   hooks: {
     beforeCreate: async (user) => {
       if (user.password) {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(user.password, salt);
+      }
+    },
+    beforeUpdate: async (user) => {
+      if (user.changed('password')) {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(user.password, salt);
       }

@@ -14,6 +14,9 @@ import authRoutes from './routes/authRoutes.js';
 import AdminUser from './models/AdminUser.js'; // ensures model is registered
 import dashboardRoutes from './routes/dashboardRoutes.js';
 
+import adminRoutes from './routes/adminRoutes.js';
+import flash from 'connect-flash';
+
 dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
@@ -67,6 +70,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
+app.use('/admins', adminRoutes);
+
 /* ── Static folders (public/) ──────────────────────────── */
 app.use('/css', express.static(path.join(__dirname, '../public/css')));
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
@@ -92,6 +97,23 @@ app.get('/', (_req, res) => res.send('AR Business Server 2.1 – OK'));
 app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(500).json({ error: 'Internal server error' });
+});
+
+/*-- Flash massages ----- */
+app.use(flash());
+// Make flash messages available in all templates
+app.use((req, res, next) => {
+  res.locals.success = req.flash('success');
+  res.locals.error = req.flash('error');
+  next();
+});
+
+// Catch-all error handler for unexpected errors
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  req.flash('error', 'An unexpected error occurred. Please try again.');
+  res.redirect('back'); // or to a specific page
 });
 
 /* ── Start server ─────────────────────────────────────── */
@@ -122,7 +144,7 @@ app.use((err, _req, res, _next) => {
     }
 
     // This specifically reads the port from your .env file
-const APP_PORT = process.env.PORT; 
+const APP_PORT = process.env.PORT || 5000; 
 
 // The server will now listen on the port you defined, defaulting to 5000 if it's not found.
 app.listen(APP_PORT, () =>

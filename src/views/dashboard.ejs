@@ -13,11 +13,20 @@
 </head>
 
 <body>
+
+       <% if (success && success.length) { %>
+        <div class="flash-message success"><%= success[0] %></div>
+       <% } %>
+         <% if (error && error.length) { %>
+           <div class="flash-message error"><%= error[0] %></div>
+         <% } %>
+
   <!-- Header -->
   <div class="header">
     <h1>AR Content Dashboard</h1>
     <div class="header-buttons">
       <a href="/dashboard/new">＋ Add New Content</a>
+      <a href="/admins" class="admin-btn">Manage Admins</a>
       <a href="/auth/logout" class="logout-btn">Logout</a>
     </div>
   </div>
@@ -83,4 +92,7 @@
 
   <script src="/js/dashboard.js" defer></script>
 </body>
+
+
+
 </html>

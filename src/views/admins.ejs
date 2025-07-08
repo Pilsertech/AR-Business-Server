@@ -1,0 +1,107 @@
+<% /* ===========================================================================
+     Admin Management Page
+     - List all admins
+     - Allow changing password
+     - Provide lockout ("terminate") option
+     =========================================================================== */ %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Admin Management | AR Business Server</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    .admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 2em;
+    }
+    .admin-table th, .admin-table td {
+      padding: 0.8em;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+    .admin-table th {
+      background: #f5f5f5;
+      font-weight: 600;
+    }
+    .action-btn {
+      padding: 0.3em 1em;
+      border-radius: 0.4em;
+      border: none;
+      background: #1976d2;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      margin-right: 0.5em;
+    }
+    .action-btn.locked {
+      background: #c62828;
+    }
+    .action-btn:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+  </style>
+</head>
+<body>
+  
+  <% if (success && success.length) { %>
+  <div class="flash-message success"><%= success[0] %></div>
+<% } %>
+<% if (error && error.length) { %>
+  <div class="flash-message error"><%= error[0] %></div>
+<% } %>
+
+  <div class="header">
+    <h1>Admin Management</h1>
+    <div class="header-buttons">
+      <a href="/dashboard">← Back to Dashboard</a>
+      <a href="/auth/logout" class="logout-btn">Logout</a>
+      <a href="/admins/new" class="btn">+ Add Admin</a>
+    </div>
+  </div>
+
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+  <% admins.forEach(admin => { %>
+    <% const isSelf = admin.id === currentUserId; %>
+    <tr>
+      <td><%= admin.email %></td>
+      <td>
+        <% if(admin.locked) { %>
+          <span style="color:#c62828;font-weight:bold">Locked</span>
+        <% } else { %>
+          <span style="color:#388e3c;font-weight:bold">Active</span>
+        <% } %>
+      </td>
+      <td>
+        <form action="/admins/change-password/<%= admin.id %>" method="POST" style="display:inline;">
+          <input type="password" name="newPassword" placeholder="New password" required style="padding:0.3em 0.6em;border-radius:0.3em;">
+          <button class="action-btn" type="submit" <% if(admin.locked){ %>disabled<% } %>>Change Password</button>
+        </form>
+        <form action="/admins/lock/<%= admin.id %>" method="POST" style="display:inline;">
+          <% if(admin.locked) { %>
+            <button class="action-btn locked" type="submit" disabled>Locked</button>
+          <% } else { %>
+            <button class="action-btn locked" type="submit" <% if(isSelf){ %>disabled title="You cannot lock your own account"<% } %>>Lock Admin</button>
+          <% } %>
+        </form>
+        <form action="/admins/delete/<%= admin.id %>" method="POST" style="display:inline;">
+          <button class="action-btn delete" type="submit" <% if(isSelf){ %>disabled title="You cannot delete your own account"<% } %>>Delete</button>
+        </form>
+      </td>
+    </tr>
+  <% }) %>
+</tbody>
+  </table>
+</body>
+</html>

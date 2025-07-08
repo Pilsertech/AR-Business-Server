@@ -1,32 +1,115 @@
+<% /* ===========================================================================
+     login.ejs — Modern and Professional Login Page
+     =========================================================================== */ %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Login</title>
-
-
-            <link rel="stylesheet" href="/css/style.css">
-
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login | AR Business Server</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    body {
+      background: linear-gradient(120deg, #232526, #414345 80%);
+      min-height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .login-container {
+      background: #fff;
+      padding: 2.5rem 2rem 2rem 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 8px 32px rgba(44,62,80,0.15);
+      width: 340px;
+      max-width: 98vw;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .login-container h1 {
+      font-size: 2rem;
+      margin-bottom: 1.2rem;
+      color: #232526;
+      letter-spacing: 1px;
+    }
+    .login-form {
+      width: 100%;
+      display: flex; flex-direction: column;
+    }
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.4rem;
+      color: #414345;
+      font-weight: 500;
+    }
+    .form-group input[type="email"],
+    .form-group input[type="password"] {
+      width: 100%;
+      padding: 0.7rem;
+      border: 1px solid #d3d3d3;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      background: #f8f8f8;
+      transition: border 0.2s;
+    }
+    .form-group input:focus {
+      border-color: #1976d2;
+      outline: none;
+    }
+    .login-btn {
+      background: #1976d2;
+      color: #fff;
+      font-size: 1.1rem;
+      padding: 0.7rem;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+      margin-top: 0.6rem;
+    }
+    .login-btn:hover {
+      background: #1565c0;
+    }
+    .login-footer {
+      margin-top: 1.2rem;
+      color: #888;
+      font-size: 0.98rem;
+      text-align: center;
+    }
+    .error-message {
+      color: #d32f2f;
+      background: #f9e6e6;
+      border-radius: 0.4rem;
+      padding: 0.5rem 0.8rem;
+      margin-bottom: 1.1rem;
+      font-size: 1rem;
+      display: block;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
   <div class="login-container">
     <h1>Admin Login</h1>
-    <% if (error) { %>
-      <div class="error-message"><%= error %></div>
+    <% if (typeof error !== 'undefined' && error) { %>
+      <span class="error-message"><%= error %></span>
     <% } %>
-    <form action="/auth/login" method="POST">
+    <form class="login-form" action="/auth/login" method="POST" autocomplete="off">
       <div class="form-group">
-        <label for="email">Email</label>
-        <input type="email" id="email" name="email" required>
+        <label for="email">Email Address</label>
+        <input id="email" name="email" type="email" placeholder="admin@example.com" required autofocus />
       </div>
       <div class="form-group">
         <label for="password">Password</label>
-        <input type="password" id="password" name="password" required>
+        <input id="password" name="password" type="password" placeholder="Your password" required />
       </div>
-      <button type="submit" class="button button-primary">Login</button>
+      <button class="login-btn" type="submit">Sign In</button>
     </form>
+    <div class="login-footer">
+      &copy; <%= new Date().getFullYear() %> AR Business Server
+    </div>
   </div>
 </body>
 </html>

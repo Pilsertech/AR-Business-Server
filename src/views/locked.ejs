@@ -1,0 +1,58 @@
+<% /* ===========================================================================
+     Locked Out Page — Displayed to locked admins on login attempt
+     =========================================================================== */ %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Access Denied | AR Business Server</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <style>
+    body {
+      background: #ececec;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    .locked-container {
+      background: #fff;
+      border-radius: 1rem;
+      box-shadow: 0 6px 28px rgba(0,0,0,0.10);
+      padding: 2.3rem 2.5rem 2rem 2.5rem;
+      text-align: center;
+      max-width: 360px;
+    }
+    .locked-container h1 {
+      color: #c62828;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    .locked-container p {
+      color: #444;
+      font-size: 1.1rem;
+      margin-bottom: 1.7rem;
+    }
+    .locked-container a {
+      color: #1976d2;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="locked-container">
+    <h1>Access Denied</h1>
+    <p>Your admin account has been locked or terminated.<br>
+      Please contact the system administrator for assistance.</p>
+    <a href="/auth/login">Back to Login</a>
+  </div>
+</body>
+
+<% if (success && success.length) { %>
+  <div class="flash-message success"><%= success[0] %></div>
+<% } %>
+<% if (error && error.length) { %>
+  <div class="flash-message error"><%= error[0] %></div>
+<% } %>
+
+</html>

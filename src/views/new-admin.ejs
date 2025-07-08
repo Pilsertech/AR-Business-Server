@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Add New Admin</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<% if (success && success.length) { %>
+  <div class="flash-message success"><%= success[0] %></div>
+<% } %>
+<% if (error && error.length) { %>
+  <div class="flash-message error"><%= error[0] %></div>
+<% } %>
+
+  <h1>Add New Admin</h1>
+  <% if (error && error.length) { %>
+    <div class="flash-message error"><%= error[0] %></div>
+  <% } %>
+  <form action="/admins/new" method="POST">
+    <label>Email: <input type="email" name="email" required></label><br>
+    <label>Password: <input type="password" name="password" required></label><br>
+    <button type="submit">Create Admin</button>
+  </form>
+  <a href="/admins">Cancel</a>
+</body>
+</html>

@@ -15,6 +15,11 @@ router.post('/login', async (req, res) => {
   const { email, password } = req.body;
   const user = await AdminUser.findOne({ where: { email } });
 
+  // Check locked status
+  if (user && user.locked) {
+    return res.status(403).render('locked');
+  }
+
   if (!user || !(await user.isValidPassword(password))) {
     return res.status(401).render('login', { error: 'Invalid email or password.' });
   }

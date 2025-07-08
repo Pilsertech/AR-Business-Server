@@ -341,3 +341,36 @@ tbody tr:nth-child(even) { background: #fcfcfc; }
   font-size: .97rem;
   margin-top: .5rem;
 }
+/* Admin management button styles */
+/* Add after other button styles */
+.admin-btn {
+  background: #ffb300;
+  color: #232526;
+  font-weight: bold;
+  padding: 0.5em 1.3em;
+  border-radius: 0.5em;
+  margin-left: 1em;
+  text-decoration: none;
+  transition: background .2s;
+}
+.admin-btn:hover {
+  background: #ff8f00;
+  color: #fff;
+}
+
+/* Flash Messages */
+.flash-message {
+  padding: 1em;
+  border-radius: 0.5em;
+  margin: 1em 0;
+  font-weight: bold;
+  text-align: center;
+}
+.flash-message.success {
+  background: #e0f7fa;
+   color: #00695c;
+}
+.flash-message.error {
+     background: #ffebee;
+      color: #b71c1c; 
+}

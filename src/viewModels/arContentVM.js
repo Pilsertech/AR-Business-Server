@@ -1,7 +1,7 @@
 /*  ============================================================================
     src/viewModels/arContentVM.js
     Framework‑agnostic business‑logic layer (MindAR compatible)
-    ────────────────────────────────────────────────────────────────────────────
+    ──────────────────────────────────────────────────────────────────────────
     • createContent()         – create DB row, save asset, generate QR
     • updateContentBySlug()   – replace asset, replace marker, update fields
     • deleteContentBySlug()   – drop DB row + ALL linked files on disk
@@ -16,7 +16,7 @@ import { fileURLToPath }  from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-/* ─── Helpers ────────────────────────────────────────────────────────────── */
+/* ─── Helpers ──────────────────────────────────────────────────────────────── */
 const id10 = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 10);
 
 export const getAllContents = () =>
@@ -25,7 +25,7 @@ export const getAllContents = () =>
 export const getBySlug = (slug) =>
   ArContent.findOne({ where: { slug } });
 
-/* ─── CREATE ─────────────────────────────────────────────────────────────── */
+/* ─── CREATE ───────────────────────────────────────────────────────────────── */
 export async function createContent(payload, files) {
   const slug = id10();
 
@@ -52,7 +52,7 @@ export async function createContent(payload, files) {
   });
 }
 
-/* ─── UPDATE ─────────────────────────────────────────────────────────────── */
+/* ─── UPDATE ──────────────────────────────────────────────────────────────── */
 export async function updateContentBySlug(slug, body, files) {
   const content = await getBySlug(slug);
   if (!content) throw new Error('Content not found.');
@@ -85,7 +85,7 @@ export async function updateContentBySlug(slug, body, files) {
   await content.save();
 }
 
-/* ─── DELETE ─────────────────────────────────────────────────────────────── */
+/* ─── DELETE ──────────────────────────────────────────────────────────────── */
 export async function deleteContentBySlug(slug) {
   const content = await getBySlug(slug);
   if (!content) throw new Error('Content not found.');
@@ -100,7 +100,7 @@ export async function deleteContentBySlug(slug) {
   await content.destroy();
 }
 
-/* ─── Utility helpers ────────────────────────────────────────────────────── */
+/* ─── Utility helpers ──────────────────────────────────────────────────────── */
 function markerRelPaths(list) {
   const arr = Array.isArray(list) ? list : JSON.parse(list || '[]');
   return arr.map(filename => `/targets/${filename}`);
