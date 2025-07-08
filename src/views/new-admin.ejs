@@ -4,97 +4,8 @@
   <meta charset="UTF-8">
   <title>Add New Admin | AR Business Server</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <link rel="stylesheet" href="/css/style.css">
-  <style>
-    body {
-      background: #410279;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-    .form-container {
-      max-width: 410px;
-      margin: 2em auto;
-      background: #fff;
-      padding: 2em 2em 1em 2em;
-      border-radius: 1em;
-      box-shadow: 0 2px 16px rgba(0,0,0,0.09);
-    }
-    .form-group {
-      margin-bottom: 1.3em;
-    }
-    label {
-      display: block;
-      font-weight: 500;
-      margin-bottom: 0.3em;
-    }
-    input[type="email"], input[type="password"], input[type="text"] {
-      width: 100%;
-      padding: 0.5em;
-      margin-top: 0.2em;
-      font-size: 1em;
-      border: 1px solid #bbb;
-      border-radius: 0.4em;
-    }
-    .toggle-password {
-      position: absolute;
-      right: 1.5em;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 1em;
-      color: #666;
-    }
-    .input-wrapper {
-      position: relative;
-    }
-    .password-match, .password-mismatch {
-      font-size: 0.98em;
-      margin-top: 0.2em;
-      font-weight: 500;
-      display: none;
-    }
-    .password-match {
-      color: #388e3c;
-    }
-    .password-mismatch {
-      color: #c62828;
-    }
-    .btn-main {
-      background: #1976d2;
-      color: #fff;
-      border: none;
-      border-radius: 0.4em;
-      padding: 0.7em 1.5em;
-      font-size: 1.1em;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 0.7em;
-      transition: background 0.2s;
-    }
-    .btn-main:active { background: #115293; }
-    .cancel-link {
-      margin-left: 1em;
-      color: #888;
-      text-decoration: underline;
-      font-size: 1em;
-    }
-    .flash-message {
-      max-width: 410px;
-      margin: 1.5em auto -1em auto;
-      padding: 1em;
-      border-radius: 0.5em;
-      font-weight: bold;
-      text-align: center;
-    }
-    .flash-message.success { background: #eafaf1; color: #2e7d32; border: 1px solid #a5d6a7; }
-    .flash-message.error { background: #ffeaea; color: #c62828; border: 1px solid #e57373; }
-    @media (max-width: 480px) {
-      .form-container { padding: 1em 0.5em 1em 0.5em;}
-    }
-  </style>
+  <link rel="stylesheet" href="/viewCss/new-admin.css">
+  <script src="/viewJs/new-admin.js" defer></script>
 </head>
 <body>
 
@@ -106,7 +17,7 @@
   <% } %>
 
   <div class="form-container">
-    <h1 style="margin-bottom:1.2em;">Add New Admin</h1>
+    <h1>Add New Admin</h1>
     <form action="/admins/new" method="POST" id="adminForm" autocomplete="off">
       <div class="form-group">
         <label for="email">Email</label>
@@ -117,7 +28,7 @@
         <label for="password">Password</label>
         <div class="input-wrapper">
           <input type="password" name="password" id="password" required autocomplete="new-password">
-          <button class="toggle-password" type="button" tabindex="-1" aria-label="Show/hide password" onclick="togglePassword('password', this)">👁</button>
+          <button class="toggle-password" type="button" tabindex="-1" aria-label="Show/hide password" data-target="password">👁</button>
         </div>
       </div>
 
@@ -125,7 +36,7 @@
         <label for="password2">Confirm Password</label>
         <div class="input-wrapper">
           <input type="password" name="password2" id="password2" required autocomplete="new-password">
-          <button class="toggle-password" type="button" tabindex="-1" aria-label="Show/hide password" onclick="togglePassword('password2', this)">👁</button>
+          <button class="toggle-password" type="button" tabindex="-1" aria-label="Show/hide password" data-target="password2">👁</button>
         </div>
         <div id="matchMsg" class="password-match">Passwords match!</div>
         <div id="mismatchMsg" class="password-mismatch">Passwords do not match.</div>
@@ -135,60 +46,5 @@
       <a href="/admins" class="cancel-link">Cancel</a>
     </form>
   </div>
-
-  <script>
-    // Password visibility
-    function togglePassword(id, btn) {
-      const input = document.getElementById(id);
-      if (input.type === "password") {
-        input.type = "text";
-        btn.textContent = "🙈";
-      } else {
-        input.type = "password";
-        btn.textContent = "👁";
-      }
-    }
-
-    // Password match check
-    const pw1 = document.getElementById('password');
-    const pw2 = document.getElementById('password2');
-    const matchMsg = document.getElementById('matchMsg');
-    const mismatchMsg = document.getElementById('mismatchMsg');
-    const createBtn = document.getElementById('createBtn');
-
-    function checkMatch() {
-      if (!pw1.value || !pw2.value) {
-        matchMsg.style.display = "none";
-        mismatchMsg.style.display = "none";
-        createBtn.disabled = true;
-        return;
-      }
-      if (pw1.value === pw2.value) {
-        matchMsg.style.display = "block";
-        mismatchMsg.style.display = "none";
-        createBtn.disabled = false;
-      } else {
-        matchMsg.style.display = "none";
-        mismatchMsg.style.display = "block";
-        createBtn.disabled = true;
-      }
-    }
-
-    pw1.addEventListener('input', checkMatch);
-    pw2.addEventListener('input', checkMatch);
-
-    // Prevent submit if passwords don't match (extra safety)
-    document.getElementById('adminForm').addEventListener('submit', function(e) {
-      if (pw1.value !== pw2.value) {
-        e.preventDefault();
-        matchMsg.style.display = "none";
-        mismatchMsg.style.display = "block";
-        createBtn.disabled = true;
-      }
-    });
-
-    // Optional: redirect to /admins after submit if success is present (for AJAX/SPA usage)
-    // If your server redirects after success (which it does), you do not need this.
-  </script>
 </body>
 </html>

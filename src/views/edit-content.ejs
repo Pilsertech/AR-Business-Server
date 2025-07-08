@@ -8,9 +8,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Edit – <%= content.title %></title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/viewCss/edit-content.css" />
+  <script src="/viewJs/edit-content.js" defer></script>
 </head>
-
 <body>
   <div class="container">
     <a href="/dashboard" class="back-link button button-primary">&larr; Dashboard</a>
@@ -65,7 +65,6 @@
       <fieldset>
         <legend>Marker File (.mind)</legend>
 
-        <!-- show current marker -->
         <% const current = Array.isArray(content.markerFiles)
              ? content.markerFiles
              : JSON.parse(content.markerFiles || '[]'); %>
@@ -84,7 +83,6 @@
         </p>
 
         <div class="form-group">
-          <!-- single file only -->
           <input type="file" name="markerFiles" accept=".mind" />
         </div>
       </fieldset>
@@ -93,7 +91,5 @@
       <button type="submit" class="button button-success">Save Changes</button>
     </form>
   </div>
-
-  <script src="/js/edit-content.js" defer></script>
 </body>
 </html>

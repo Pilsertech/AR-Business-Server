@@ -81,6 +81,8 @@ app.use('/targets', express.static(path.join(__dirname, '../public/targets')));
 app.use('/qr', express.static(path.join(__dirname, '../public/qr')));
 app.use('/js', express.static(path.join(__dirname, '../public/js')));
 app.use('/vendor', express.static(path.join(__dirname, '../public/vendor')));
+app.use('/viewCss', express.static(path.join(__dirname, 'views/viewCss')));
+app.use('/viewJs', express.static(path.join(__dirname, 'views/viewJs')));
 
 /* ── View engine (EJS) ─────────────────────────────────── */
 app.set('views', path.join(__dirname, 'views'));

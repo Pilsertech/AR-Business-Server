@@ -1,0 +1,64 @@
+body {
+  background: linear-gradient(135deg, #090e22 0%, #1a77d9 50%, #24e5c6 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+.locked-container {
+  background: rgba(255,255,255,0.97);
+  border-radius: 1.2rem;
+  box-shadow: 0 8px 32px #24e5c650;
+  padding: 2.3rem 2.5rem 2rem 2.5rem;
+  text-align: center;
+  max-width: 380px;
+  border: 1.5px solid #24e5c6;
+}
+.locked-container h1 {
+  color: #ff5252;
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-shadow: 0 1px 12px #ffb147aa;
+}
+.locked-container p {
+  color: #1976d2;
+  font-size: 1.14rem;
+  margin-bottom: 1.7rem;
+}
+.locked-container a {
+  color: #1976d2;
+  text-decoration: underline;
+  font-weight: bold;
+  font-size: 1.05em;
+  transition: color 0.18s;
+}
+.locked-container a:hover {
+  color: #24e5c6;
+}
+.flash-message {
+  max-width: 370px;
+  margin: 1.5em auto -1em auto;
+  padding: 1em;
+  border-radius: 0.5em;
+  font-weight: bold;
+  text-align: center;
+  font-size: 1.05em;
+  border: 1.5px solid;
+  box-shadow: 0 1px 10px #24e5c630;
+  background: #eafaf1;
+  color: #10b184;
+  border-color: #24e5c6;
+}
+.flash-message.error {
+  background: #ffeaea;
+  color: #ff5252;
+  border-color: #ffb147;
+}
+.flash-message.success {
+  background: #eafaf1;
+  color: #10b184;
+  border-color: #24e5c6;
+}

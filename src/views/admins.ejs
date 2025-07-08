@@ -1,8 +1,6 @@
 <% /* ===========================================================================
      Admin Management Page
      - List all admins
-     - Allow changing password
-     - Provide lockout ("terminate") option
      =========================================================================== */ %>
 <!DOCTYPE html>
 <html lang="en">
@@ -10,169 +8,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Admin Management | AR Business Server</title>
-  <link rel="stylesheet" href="/css/style.css" />
-  <style>
-    body {
-      background: #f6fafd;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
-    .header {
-      background: #1976d2;
-      color: #fff;
-      padding: 1.5em 2em 1em 2em;
-      border-bottom-left-radius: 1.2em;
-      border-bottom-right-radius: 1.2em;
-      display: flex;
-      flex-direction: column;
-      gap: 0.8em;
-    }
-    .header h1 {
-      margin: 0;
-      font-size: 2em;
-      font-weight: 600;
-      letter-spacing: 1px;
-    }
-    .header-buttons {
-      display: flex;
-      gap: 1em;
-      margin-top: 0.2em;
-      flex-wrap: wrap;
-    }
-    .header-buttons a, .header-buttons .btn {
-      background: #fff;
-      color: #1976d2;
-      text-decoration: none;
-      font-weight: bold;
-      padding: 0.6em 1.1em;
-      border-radius: 0.4em;
-      transition: background 0.15s;
-      border: 1px solid #1976d2;
-      font-size: 1em;
-    }
-    .header-buttons a.logout-btn {
-      background: #e3e3e3;
-      color: #c62828;
-      border: 1px solid #c62828;
-    }
-    .header-buttons .btn:hover,
-    .header-buttons a:hover {
-      background: #1976d2;
-      color: #fff;
-    }
-    .header-buttons a.logout-btn:hover {
-      background: #c62828;
-      color: #fff;
-    }
-    .flash-message {
-      max-width: 660px;
-      margin: 2.5em auto 1.2em auto;
-      padding: 1.2em 1em;
-      border-radius: 0.6em;
-      font-size: 1.1em;
-      font-weight: 500;
-      text-align: center;
-      border: 1.5px solid;
-      box-shadow: 0 3px 18px rgba(33,150,243,0.07);
-      letter-spacing: 0.2px;
-    }
-    .flash-message.success {
-      background: #eafaf1;
-      color: #2e7d32;
-      border-color: #a5d6a7;
-    }
-    .flash-message.error {
-      background: #ffeaea;
-      color: #c62828;
-      border-color: #e57373;
-    }
-    .admin-table {
-      width: 98%;
-      max-width: 900px;
-      border-collapse: collapse;
-      margin: 2em auto 2em auto;
-      background: #fff;
-      border-radius: 1em;
-      overflow: hidden;
-      box-shadow: 0 2px 18px rgba(33,150,243,0.08);
-    }
-    .admin-table th, .admin-table td {
-      padding: 1em 0.7em;
-      border-bottom: 1px solid #e3e3e3;
-      text-align: left;
-      font-size: 1.05em;
-    }
-    .admin-table th {
-      background: #f4faff;
-      font-weight: 600;
-      color: #1976d2;
-    }
-    .admin-table tr:last-child td {
-      border-bottom: none;
-    }
-    .status-active, .status-locked {
-      font-weight: bold;
-      font-size: 1em;
-      padding: 0.25em 0.8em;
-      border-radius: 0.3em;
-      letter-spacing: 0.3px;
-    }
-    .status-active {
-      background: #eafaf1;
-      color: #388e3c;
-      border: 1px solid #a5d6a7;
-    }
-    .status-locked {
-      background: #ffeaea;
-      color: #c62828;
-      border: 1px solid #e57373;
-    }
-    .btn-group {
-      display: flex;
-      gap: 0.2em;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    .action-btn {
-      padding: 0.3em 1em;
-      border-radius: 0.4em;
-      border: none;
-      background: #1976d2;
-      color: #fff;
-      font-weight: bold;
-      cursor: pointer;
-      margin-right: 0.35em;
-      font-size: 1em;
-      transition: background 0.13s;
-    }
-    .action-btn.locked {
-      background: #c62828;
-    }
-    .action-btn.delete {
-      background: #e53935;
-    }
-    .action-btn:disabled, .action-btn[disabled] {
-      opacity: 0.5;
-      cursor: not-allowed;
-      background: #bbb;
-      color: #fff;
-    }
-    @media (max-width: 740px) {
-      .admin-table, .admin-table th, .admin-table td {
-        font-size: 0.97em;
-      }
-      .header { padding: 1.2em 1em 1em 1em; }
-    }
-    @media (max-width: 540px) {
-      .admin-table th, .admin-table td {
-        padding: 0.75em 0.4em;
-      }
-      .header h1 {
-        font-size: 1.3em;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="/viewCss/admins.css" />
+  <script src="/viewJs/admins.js" defer></script>
 </head>
 <body>
   <% if (success && success.length) { %>
@@ -202,9 +39,7 @@
     <tbody>
       <% if (!admins.length) { %>
         <tr>
-          <td colspan="3" style="text-align:center; font-size:1.1em; color:#888; padding:2.5em 0;">
-            No admins found.
-          </td>
+          <td colspan="3" class="no-admins">No admins found.</td>
         </tr>
       <% } %>
       <% admins.forEach(admin => { %>
@@ -221,7 +56,7 @@
           <td>
             <div class="btn-group">
               <form action="/admins/change-password/<%= admin.id %>" method="POST" style="display:inline;">
-                <input type="password" name="newPassword" placeholder="New password" required style="padding:0.3em 0.6em;border-radius:0.3em;">
+                <input type="password" name="newPassword" placeholder="New password" required class="pw-input">
                 <button class="action-btn" type="submit" <% if(admin.locked){ %>disabled<% } %>>Change Password</button>
               </form>
               <form action="/admins/lock/<%= admin.id %>" method="POST" style="display:inline;">

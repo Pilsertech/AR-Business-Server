@@ -1,0 +1,110 @@
+body {
+  background: linear-gradient(135deg, #090e22 0%, #1a77d9 50%, #24e5c6 100%);
+  min-height: 100vh;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.login-container {
+  background: rgba(255,255,255,0.96);
+  padding: 2.5rem 2rem 2rem 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px #24e5c650;
+  width: 340px;
+  max-width: 98vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1.5px solid #24e5c6;
+}
+.login-container h1 {
+  font-size: 2rem;
+  margin-bottom: 1.2rem;
+  color: #1976d2;
+  letter-spacing: 1px;
+  font-weight: 700;
+  text-shadow: 0 1px 12px #24e5c6bb;
+}
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.form-group {
+  margin-bottom: 1.3rem;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: #1976d2;
+  font-weight: 500;
+}
+.input-wrapper {
+  position: relative;
+}
+input[type="email"], input[type="password"] {
+  width: 100%;
+  padding: 0.7rem;
+  border: 1.5px solid #24e5c6;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  background: #f6fafd;
+  box-shadow: 0 1px 5px #24e5c620;
+  transition: border 0.2s;
+}
+input:focus {
+  border-color: #1a77d9;
+  outline: none;
+}
+.toggle-password {
+  position: absolute;
+  right: 1em;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.14em;
+  color: #1a77d9;
+  padding: 0;
+  z-index: 2;
+}
+.login-btn {
+  background: linear-gradient(90deg, #1a77d9 0%, #24e5c6 100%);
+  color: #fff;
+  font-size: 1.1rem;
+  padding: 0.7rem;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s, color 0.2s;
+  margin-top: 0.6rem;
+  box-shadow: 0 2px 8px #1a77d955;
+}
+.login-btn:hover {
+  background: #1565c0;
+  color: #fff;
+}
+.login-footer {
+  margin-top: 1.2rem;
+  color: #888;
+  font-size: 0.98rem;
+  text-align: center;
+}
+.error-message {
+  color: #ff5252;
+  background: #fff0f0;
+  border-radius: 0.4rem;
+  padding: 0.5rem 0.8rem;
+  margin-bottom: 1.1rem;
+  font-size: 1rem;
+  display: block;
+  text-align: center;
+  box-shadow: 0 1px 8px #ff525230;
+  border: 1.5px solid #ffb147;
+}
+@media (max-width: 480px) {
+  .login-container { padding: 1em 0.5em 1em 0.5em; }
+}

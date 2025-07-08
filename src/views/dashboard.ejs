@@ -2,24 +2,22 @@
      views/dashboard.ejs
      Admin list with marker status & action buttons
      ========================================================================= */ %>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>Admin Dashboard</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/viewCss/dashboard.css" />
+  <script src="/viewJs/dashboard.js" defer></script>
 </head>
-
 <body>
-
-       <% if (success && success.length) { %>
-        <div class="flash-message success"><%= success[0] %></div>
-       <% } %>
-         <% if (error && error.length) { %>
-           <div class="flash-message error"><%= error[0] %></div>
-         <% } %>
+  <% if (success && success.length) { %>
+    <div class="flash-message success"><%= success[0] %></div>
+  <% } %>
+  <% if (error && error.length) { %>
+    <div class="flash-message error"><%= error[0] %></div>
+  <% } %>
 
   <!-- Header -->
   <div class="header">
@@ -32,7 +30,7 @@
   </div>
 
   <!-- Table -->
-  <table>
+  <table class="ar-table">
     <thead>
       <tr>
         <th>Title</th>
@@ -42,44 +40,34 @@
         <th>Actions</th>
       </tr>
     </thead>
-
     <tbody>
       <% if (!contents.length) { %>
-        <tr><td colspan="5" style="text-align:center;padding:2rem;">No AR content yet.</td></tr>
+        <tr><td colspan="5" class="no-content">No AR content yet.</td></tr>
       <% } %>
-
       <% contents.forEach(item => { %>
         <tr>
           <!-- Title (tooltip = description) -->
           <td title="<%= item.description || '' %>"><%= item.title %></td>
-
           <td><%= item.assetType %></td>
           <td><%= item.contentType %></td>
-
           <!-- Marker status -->
-          <!-- Marker status (file shown if uploaded) -->
-<td>
-  <% if (item.contentType === 'marker') { %>
-    <% const files = Array.isArray(item.markerFiles)
-         ? item.markerFiles
-         : JSON.parse(item.markerFiles || '[]'); %>
-
-    <% if (files.length) { %>
-      <span class="status-ok"><%= files[0] %></span>
-    <% } else { %>
-      <span class="status-missing">Missing</span>
-    <% } %>
-  <% } else { %> — <% } %>
-</td>
-
-
-
+          <td>
+            <% if (item.contentType === 'marker') { %>
+              <% const files = Array.isArray(item.markerFiles)
+                   ? item.markerFiles
+                   : JSON.parse(item.markerFiles || '[]'); %>
+              <% if (files.length) { %>
+                <span class="status-ok"><%= files[0] %></span>
+              <% } else { %>
+                <span class="status-missing">Missing</span>
+              <% } %>
+            <% } else { %> — <% } %>
+          </td>
           <!-- Action buttons -->
           <td>
             <div class="btn-group">
               <a class="btn edit-btn" href="/dashboard/edit/<%= item.slug %>">Edit</a>
-              <a class="btn qr-btn"   href="<%= item.qrCodeUrl %>" download>Download QR</a>
-
+              <a class="btn qr-btn" href="<%= item.qrCodeUrl %>" download>Download QR</a>
               <form action="/dashboard/delete/<%= item.slug %>" method="POST" data-delete>
                 <button type="submit" class="btn delete-btn">Delete</button>
               </form>
@@ -89,10 +77,5 @@
       <% }) %>
     </tbody>
   </table>
-
-  <script src="/js/dashboard.js" defer></script>
 </body>
-
-
-
 </html>
