@@ -13,7 +13,6 @@ import arContentRoutes from './routes/arContentRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import AdminUser from './models/AdminUser.js'; // ensures model is registered
 import dashboardRoutes from './routes/dashboardRoutes.js';
-
 import adminRoutes from './routes/adminRoutes.js';
 import flash from 'connect-flash';
 
@@ -28,23 +27,20 @@ app.use(
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
         "script-src": [
-          "'self'", // Allows scripts from our own server (like form-logic.js)
-          "'unsafe-eval'", // Required by A-Frame/AR.js
+          "'self'",
+          "'unsafe-eval'",
           "aframe.io",
           "cdn.jsdelivr.net",
           "unpkg.com",
           "raw.githack.com",
-          "blob:", 
-          "overbridgenet.com" 
+          "blob:",
+          "overbridgenet.com"
         ],
-
         connectSrc: [
-      "'self'",
-      "https://www.google-analytics.com",
-      "https://overbridgenet.com"
-      // only add other domains you trust!
-      ],
-
+          "'self'",
+          "https://www.google-analytics.com",
+          "https://overbridgenet.com"
+        ],
       },
     },
   })
@@ -58,19 +54,25 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // true only behind HTTPS
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       sameSite: 'lax'
     }
   })
 );
 
+app.use(flash()); // <-- Place immediately after session!
+
+// Make flash messages available in all templates
+app.use((req, res, next) => {
+  res.locals.success = req.flash('success');
+  res.locals.error = req.flash('error');
+  next();
+});
+
 app.use(express.json());
-// It parses URL-encoded bodies from HTML forms
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
-
-app.use('/admins', adminRoutes);
 
 /* ── Static folders (public/) ──────────────────────────── */
 app.use('/css', express.static(path.join(__dirname, '../public/css')));
@@ -88,32 +90,25 @@ app.set('view engine', 'ejs');
 app.use('/auth', authRoutes); // login / logout / register
 app.use('/dashboard', dashboardRoutes);
 app.use('/api', arContentRoutes); // JSON CRUD
+app.use('/admins', adminRoutes);
 app.use('/', arContentRoutes); // /card/:slug page
 
 /* ── Health check ─────────────────────────────────────── */
 app.get('/', (_req, res) => res.send('AR Business Server 2.1 – OK'));
 
 /* ── Error handler ────────────────────────────────────── */
-app.use((err, _req, res, _next) => {
-  console.error(err);
-  res.status(500).json({ error: 'Internal server error' });
-});
-
-/*-- Flash massages ----- */
-app.use(flash());
-// Make flash messages available in all templates
-app.use((req, res, next) => {
-  res.locals.success = req.flash('success');
-  res.locals.error = req.flash('error');
-  next();
-});
-
-// Catch-all error handler for unexpected errors
-
+// General error handler for JSON APIs and other errors
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error(err.stack || err);
+  // If response is already sent, delegate to default Express handler
+  if (res.headersSent) return next(err);
+  // If it's an AJAX/JSON request, send JSON error
+  if (req.xhr || req.headers.accept?.includes('json')) {
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+  // Otherwise, flash error and redirect back
   req.flash('error', 'An unexpected error occurred. Please try again.');
-  res.redirect('back'); // or to a specific page
+  res.redirect('back');
 });
 
 /* ── Start server ─────────────────────────────────────── */
@@ -122,35 +117,24 @@ app.use((err, req, res, next) => {
     await sequelize.authenticate();
     console.log('✅ SQL Server connection OK');
 
-      // This makes sure the `admin_users` table exists before you try to add to it.
-    
-      //This below line  command might work in other databases like MySQL, it is invalid syntax for Microsoft SQL Server, SO I COMMENTED IT FOR FUTURE USE
-      //await sequelize.sync({ alter: true });
-     //instead this bellow 
-     await sequelize.sync();
+    // Ensure tables exist and are up to date
+    await sequelize.sync();
+    console.log('🔄 Models synchronized');
 
-     console.log('🔄 Models synchronized');
-
-    
-     // This runs *after* the tables are confirmed to exist.
-     const adminCount = await AdminUser.count();
-     if (adminCount === 0) {
-       // This part only runs if the `admin_users` table is empty.
-       await AdminUser.create({
+    // Create default admin user if none exist
+    const adminCount = await AdminUser.count();
+    if (adminCount === 0) {
+      await AdminUser.create({
         email: 'admin@example.com',
-        password: 'password123', // Change this in  .env file for security
+        password: 'password123', // Change this in .env for security
       });
       console.log('✅ Default admin user created: admin@example.com');
     }
 
-    // This specifically reads the port from your .env file
-const APP_PORT = process.env.PORT || 5000; 
-
-// The server will now listen on the port you defined, defaulting to 5000 if it's not found.
-app.listen(APP_PORT, () =>
-  console.log(`🚀 Server listening on http://localhost:${APP_PORT}`)
-);
-    
+    const APP_PORT = process.env.PORT || 5000;
+    app.listen(APP_PORT, () =>
+      console.log(`🚀 Server listening on http://localhost:${APP_PORT}`)
+    );
   } catch (e) {
     console.error('❌ DB connection failed:', e);
     process.exit(1);

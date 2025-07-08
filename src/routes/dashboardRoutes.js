@@ -1,7 +1,5 @@
-// ────────────────────────────────────────────────────────────────────────────
 //  src/routes/dashboardRoutes.js
 //  All routes behind /dashboard/*  (protected by requireLogin)
-// ────────────────────────────────────────────────────────────────────────────
 import { Router } from 'express';
 import { upload } from '../config/multerConfig.js';
 import {
@@ -9,7 +7,7 @@ import {
   getBySlug,
   createContent,
   deleteContentBySlug,
-  updateContentBySlug            // NEW import
+  updateContentBySlug
 } from '../viewModels/arContentVM.js';
 import { requireLogin } from '../middleware/authMiddleware.js';
 
@@ -20,7 +18,17 @@ router.use(requireLogin);
 router.get('/', async (req, res, next) => {
   try {
     const contents = await getAllContents();
-    res.render('dashboard', { contents });
+
+    // Ensure success and error are always defined (for flash or manual messages)
+    // If you use connect-flash, uncomment below and ensure flash middleware is loaded in your app.js/server.js
+    // const success = req.flash ? req.flash('success') : [];
+    // const error = req.flash ? req.flash('error') : [];
+
+    // If you don't use flash, you can use query params or session or just default empty arrays
+    const success = req.query.success ? [req.query.success] : [];
+    const error = req.query.error ? [req.query.error] : [];
+
+    res.render('dashboard', { contents, success, error });
   } catch (err) { next(err); }
 });
 
@@ -42,8 +50,12 @@ router.post(
         },
         req.files
       );
-      res.redirect('/dashboard');
-    } catch (err) { next(err); }
+      // Optionally add a success message as a query param
+      res.redirect('/dashboard?success=Content added successfully!');
+    } catch (err) {
+      // Optionally redirect with error
+      res.redirect('/dashboard?error=Failed to add content.');
+    }
   }
 );
 
@@ -60,14 +72,15 @@ router.get('/edit/:slug', async (req, res, next) => {
 router.post(
   '/edit/:slug',
   upload.fields([
-    
     { name: 'markerFiles', maxCount: 1 } // one .mind file
   ]),
   async (req, res, next) => {
     try {
       await updateContentBySlug(req.params.slug, req.body, req.files);
-      res.redirect('/dashboard');
-    } catch (err) { next(err); }
+      res.redirect('/dashboard?success=Content updated!');
+    } catch (err) {
+      res.redirect('/dashboard?error=Failed to update content.');
+    }
   }
 );
 
@@ -75,8 +88,10 @@ router.post(
 router.post('/delete/:slug', async (req, res, next) => {
   try {
     await deleteContentBySlug(req.params.slug);
-    res.redirect('/dashboard');
-  } catch (err) { next(err); }
+    res.redirect('/dashboard?success=Content deleted.');
+  } catch (err) {
+    res.redirect('/dashboard?error=Failed to delete content.');
+  }
 });
 
 export default router;

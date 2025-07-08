@@ -10,50 +10,34 @@ router.use(requireLogin);
 // GET /admins - Admin management page
 router.get('/', async (req, res) => {
   const admins = await AdminUser.findAll({ attributes: ['id', 'email', 'locked'] });
-  res.render('admins', { admins, currentUserId: req.session.userId });
+  // Always pass success and error for EJS view
+  const success = req.flash ? req.flash('success') : [];
+  const error = req.flash ? req.flash('error') : [];
+  res.render('admins', { admins, currentUserId: req.session.userId, success, error });
 });
 
 // GET new admin form
 router.get('/new', (req, res) => {
-  res.render('new-admin');
+  const success = req.flash ? req.flash('success') : [];
+  const error = req.flash ? req.flash('error') : [];
+  res.render('new-admin', { success, error });
 });
 
 // POST /admins/change-password/:id - Change an admin's password
 router.post('/change-password/:id', async (req, res) => {
   const { newPassword } = req.body;
   const admin = await AdminUser.findByPk(req.params.id);
-  if (!admin || admin.locked) return res.status(400).send('Cannot update this admin.');
+  if (!admin || admin.locked) {
+    req.flash('error', 'Cannot update this admin.');
+    return res.redirect('/admins');
+  }
   admin.password = newPassword; // Will be hashed by model hook
   await admin.save();
+  req.flash('success', 'Password updated.');
   res.redirect('/admins');
 });
 
 // POST /admins/lock/:id - Lock an admin (prevent login)
-router.post('/lock/:id', async (req, res) => {
-  const admin = await AdminUser.findByPk(req.params.id);
-  if (!admin) return res.status(400).send('Admin not found.');
-  admin.locked = true;
-  await admin.save();
-  res.redirect('/admins');
-});
-
-
-// POST /admins/lock/:id - Lock an admin (prevent login)
-router.post('/lock/:id', async (req, res) => {
-  // Prevent locking yourself
-  if (parseInt(req.params.id, 10) === req.session.userId) {
-    // Optionally, you could flash a message here instead of sending plain text!
-    return res.status(403).send('You cannot lock your own account.');
-  }
-  const admin = await AdminUser.findByPk(req.params.id);
-  if (!admin) return res.status(400).send('Admin not found.');
-  admin.locked = true;
-  await admin.save();
-  res.redirect('/admins');
-});
-
-// POST /admins/unlocks/:id - unlock an admin (allow login )
-
 router.post('/lock/:id', async (req, res) => {
   if (parseInt(req.params.id, 10) === req.session.userId) {
     req.flash('error', 'You cannot lock your own account.');
@@ -67,6 +51,19 @@ router.post('/lock/:id', async (req, res) => {
   admin.locked = true;
   await admin.save();
   req.flash('success', `Locked admin: ${admin.email}`);
+  res.redirect('/admins');
+});
+
+// POST /admins/unlock/:id - Unlock an admin (allow login)
+router.post('/unlock/:id', async (req, res) => {
+  const admin = await AdminUser.findByPk(req.params.id);
+  if (!admin) {
+    req.flash('error', 'Admin not found.');
+    return res.redirect('/admins');
+  }
+  admin.locked = false;
+  await admin.save();
+  req.flash('success', `Unlocked admin: ${admin.email}`);
   res.redirect('/admins');
 });
 
@@ -89,7 +86,6 @@ router.post('/new', async (req, res) => {
 });
 
 // Delete an admin
-
 router.post('/delete/:id', async (req, res) => {
   if (parseInt(req.params.id, 10) === req.session.userId) {
     req.flash('error', 'You cannot delete your own account.');
@@ -99,7 +95,5 @@ router.post('/delete/:id', async (req, res) => {
   req.flash('success', 'Admin deleted.');
   res.redirect('/admins');
 });
-
-
 
 export default router;

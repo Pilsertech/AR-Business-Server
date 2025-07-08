@@ -1,150 +1,184 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Add New AR Content</title>
-
-  <link rel="stylesheet" href="/css/style.css" />
+  <meta charset="UTF-8">
+  <title>Add New Admin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .form-container {
+      max-width: 400px;
+      margin: 2em auto;
+      background: #fff;
+      padding: 2em 2em 1em 2em;
+      border-radius: 1em;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.09);
+    }
+    .form-group {
+      margin-bottom: 1.3em;
+    }
+    label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.3em;
+    }
+    input[type="email"], input[type="password"] {
+      width: 100%;
+      padding: 0.5em;
+      margin-top: 0.2em;
+      font-size: 1em;
+      border: 1px solid #bbb;
+      border-radius: 0.4em;
+    }
+    .toggle-password {
+      position: absolute;
+      right: 1.5em;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1em;
+      color: #666;
+    }
+    .input-wrapper {
+      position: relative;
+    }
+    .password-match {
+      font-size: 0.98em;
+      margin-top: 0.2em;
+      font-weight: 500;
+      color: #388e3c;
+      display: none;
+    }
+    .password-mismatch {
+      font-size: 0.98em;
+      margin-top: 0.2em;
+      font-weight: 500;
+      color: #c62828;
+      display: none;
+    }
+    .btn-main {
+      background: #1976d2;
+      color: #fff;
+      border: none;
+      border-radius: 0.4em;
+      padding: 0.7em 1.5em;
+      font-size: 1.1em;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 0.7em;
+      transition: background 0.2s;
+    }
+    .btn-main:active { background: #115293; }
+    .cancel-link {
+      margin-left: 1em;
+      color: #888;
+      text-decoration: underline;
+      font-size: 1em;
+    }
+    .flash-message {
+      max-width: 400px;
+      margin: 1.5em auto -1em auto;
+      padding: 1em;
+      border-radius: 0.5em;
+      font-weight: bold;
+      text-align: center;
+    }
+    .flash-message.success { background: #eafaf1; color: #2e7d32; border: 1px solid #a5d6a7; }
+    .flash-message.error { background: #ffeaea; color: #c62828; border: 1px solid #e57373; }
+  </style>
 </head>
-
 <body>
-  <div class="container">
-    <a href="/dashboard" class="back-link button button-primary">
-      &larr; Back to Dashboard
-    </a>
 
-    <h1>Add New AR Content</h1>
+  <% if (success && success.length) { %>
+    <div class="flash-message success"><%= success[0] %></div>
+  <% } %>
+  <% if (error && error.length) { %>
+    <div class="flash-message error"><%= error[0] %></div>
+  <% } %>
 
-    <form id="newContentForm"
-          action="/dashboard/new"
-          method="POST"
-          enctype="multipart/form-data">
+  <div class="form-container">
+    <h1>Add New Admin</h1>
+    <form action="/admins/new" method="POST" id="adminForm" autocomplete="off">
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" name="email" id="email" required autocomplete="username">
+      </div>
 
-      <!-- 1 ▸ Basic information -->
-      <fieldset>
-        <legend>1. Basic Information</legend>
-
-        <div class="form-group">
-          <label for="title">Title</label>
-          <input id="title" name="title" type="text" required autofocus />
+      <div class="form-group">
+        <label for="password">Password:</label>
+        <div class="input-wrapper">
+          <input type="password" name="password" id="password" required autocomplete="new-password">
+          <button class="toggle-password" type="button" tabindex="-1" aria-label="Show/hide password" onclick="togglePassword('password', this)">👁</button>
         </div>
+      </div>
 
-        <div class="form-group">
-          <label for="description">Description</label>
-          <textarea id="description" name="description" rows="3"></textarea>
+      <div class="form-group">
+        <label for="password2">Confirm Password:</label>
+        <div class="input-wrapper">
+          <input type="password" name="password2" id="password2" required autocomplete="new-password">
+          <button class="toggle-password" type="button" tabindex="-1" aria-label="Show/hide password" onclick="togglePassword('password2', this)">👁</button>
         </div>
-      </fieldset>
+        <div id="matchMsg" class="password-match">Passwords match!</div>
+        <div id="mismatchMsg" class="password-mismatch">Passwords do not match.</div>
+      </div>
 
-      <!-- 2 ▸ AR configuration -->
-      <fieldset>
-        <legend>2. AR Configuration</legend>
-
-        <div class="form-group">
-          <label for="experienceType">Select Experience Type</label>
-          <select id="experienceType" name="experienceType">
-            <option value="marker-model">Marker‑Based · 3D Model</option>
-            <option value="marker-image">Marker‑Based · Image</option>
-            <option value="marker-video">Marker‑Based · Video</option>
-            <option value="geo-model">Location‑Based · 3D Model</option>
-            <option value="geo-image">Location‑Based · Image</option>
-            <option value="geo-video">Location‑Based · Video</option>
-            <option value="face-model">Face Tracking · 3D Model</option>
-          </select>
-        </div>
-      </fieldset>
-
-      <!-- 3 ▸ Upload files -->
-      <fieldset>
-        <legend>3. Upload Files</legend>
-
-        <!-- Asset‑type selector -->
-        <div class="form-group">
-          <label for="assetType">Select Asset Type</label>
-          <select id="assetType" name="assetType">
-            <option value="">-- Choose Asset Type --</option>
-            <option value="model">3D Model (.glb/.gltf)</option>
-            <option value="image">Image (.jpg/.png)</option>
-            <option value="video">Video (.mp4)</option>
-          </select>
-        </div>
-
-        <!-- Dynamic asset inputs -->
-        <div class="form-group hidden" id="asset-model-group">
-          <label for="assetFileModel">Upload 3D Model</label>
-          <input id="assetFileModel" name="assetFile" type="file" accept=".glb,.gltf" />
-        </div>
-
-        <div class="form-group hidden" id="asset-image-group">
-          <label for="assetFileImage">Upload Image</label>
-          <input id="assetFileImage" name="assetFile" type="file" accept="image/*" />
-        </div>
-
-        <div class="form-group hidden" id="asset-video-group">
-          <label for="assetFileVideo">Upload Video</label>
-          <input id="assetFileVideo" name="assetFile" type="file" accept="video/mp4" />
-        </div>
-
-        <!-- Geo inputs (only when experienceType starts with 'geo') -->
-        <div id="geo-controls-group" class="hidden">
-          <div class="form-group">
-            <label for="latitude">GPS Latitude</label>
-            <input id="latitude" name="latitude" type="number" step="any" />
-          </div>
-
-          <div class="form-group">
-            <label for="longitude">GPS Longitude</label>
-            <input id="longitude" name="longitude" type="number" step="any" />
-          </div>
-        </div>
-      </fieldset>
-
-      <!-- 4 ▸ Scene options -->
-      <fieldset>
-        <legend>4. Scene Options</legend>
-
-        <!-- Position (X Y Z) -->
-        <div class="form-group">
-          <label>Position (X, Y, Z)</label>
-          <div class="position-group">
-            <div>
-              <label for="positionX" class="sub-label">X</label>
-              <input id="positionX" name="positionX" type="number" step="0.1" value="0" />
-            </div>
-            <div>
-              <label for="positionY" class="sub-label">Y</label>
-              <input id="positionY" name="positionY" type="number" step="0.1" value="0" />
-            </div>
-            <div>
-              <label for="positionZ" class="sub-label">Z</label>
-              <input id="positionZ" name="positionZ" type="number" step="0.1" value="0" />
-            </div>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="modelScale">Scale (Size)</label>
-          <input id="modelScale" name="modelScale" type="number" step="0.1" value="1.0" required />
-        </div>
-
-        <div class="form-group">
-          <label for="actionButtonText">Button Text (Optional)</label>
-          <input id="actionButtonText" name="actionButtonText" type="text" />
-        </div>
-
-        <div class="form-group">
-          <label for="actionButtonUrl">Button URL (Optional)</label>
-          <input id="actionButtonUrl" name="actionButtonUrl" type="text" />
-        </div>
-      </fieldset>
-
-      <button type="submit" class="button button-primary">
-        Create Content
-      </button>
+      <button type="submit" class="btn-main" id="createBtn" disabled>Create Admin</button>
+      <a href="/admins" class="cancel-link">Cancel</a>
     </form>
   </div>
 
-  <!-- Behaviour (shows/hides inputs) -->
-  <script src="/js/form-logic.js" defer></script>
+  <script>
+    // Password visibility
+    function togglePassword(id, btn) {
+      const input = document.getElementById(id);
+      if (input.type === "password") {
+        input.type = "text";
+        btn.textContent = "🙈";
+      } else {
+        input.type = "password";
+        btn.textContent = "👁";
+      }
+    }
+
+    // Password match check
+    const pw1 = document.getElementById('password');
+    const pw2 = document.getElementById('password2');
+    const matchMsg = document.getElementById('matchMsg');
+    const mismatchMsg = document.getElementById('mismatchMsg');
+    const createBtn = document.getElementById('createBtn');
+
+    function checkMatch() {
+      if (!pw1.value || !pw2.value) {
+        matchMsg.style.display = "none";
+        mismatchMsg.style.display = "none";
+        createBtn.disabled = true;
+        return;
+      }
+      if (pw1.value === pw2.value) {
+        matchMsg.style.display = "block";
+        mismatchMsg.style.display = "none";
+        createBtn.disabled = false;
+      } else {
+        matchMsg.style.display = "none";
+        mismatchMsg.style.display = "block";
+        createBtn.disabled = true;
+      }
+    }
+
+    pw1.addEventListener('input', checkMatch);
+    pw2.addEventListener('input', checkMatch);
+
+    // Prevent submit if passwords don't match (extra safety)
+    document.getElementById('adminForm').addEventListener('submit', function(e) {
+      if (pw1.value !== pw2.value) {
+        e.preventDefault();
+        matchMsg.style.display = "none";
+        mismatchMsg.style.display = "block";
+        createBtn.disabled = true;
+      }
+    });
+  </script>
 </body>
 </html>
