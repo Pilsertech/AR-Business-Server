@@ -69,7 +69,18 @@ router.post('/unlock/:id', async (req, res) => {
 
 // POST new admin
 router.post('/new', async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, password2 } = req.body;
+
+  // New: Validate password fields
+  if (!password || !password2) {
+    req.flash('error', 'Both password fields are required.');
+    return res.redirect('/admins/new');
+  }
+  if (password !== password2) {
+    req.flash('error', 'Passwords do not match.');
+    return res.redirect('/admins/new');
+  }
+
   try {
     const existing = await AdminUser.findOne({ where: { email } });
     if (existing) {
@@ -80,6 +91,7 @@ router.post('/new', async (req, res) => {
     req.flash('success', 'New admin created.');
     res.redirect('/admins');
   } catch (err) {
+    console.error(err);
     req.flash('error', 'Error creating admin.');
     res.redirect('/admins/new');
   }
