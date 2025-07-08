@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Available AR Admins | AR Business Platform</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <link rel="stylesheet" href="/website/website.css" />
+  <script src="/website/website.js" defer></script>
+</head>
+<body>
+  <header class="landing-header">
+    <a href="/website/" class="back-link">&larr; Home</a>
+    <h2>Available AR Admins</h2>
+  </header>
+  <main class="main-content">
+    <table class="admin-list-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Phone(s)</th>
+          <th>Email</th>
+          <th>Location</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% arAdmins.forEach(admin => { %>
+        <tr>
+          <td><%= admin.fullName %></td>
+          <td>
+            <% admin.phone.split(',').forEach(function(phone, idx) { %>
+              <a href="tel:<%= phone.trim() %>"><%= phone.trim() %></a><%= idx < admin.phone.split(',').length - 1 ? ', ' : '' %>
+            <% }) %>
+          </td>
+          <td><a href="mailto:<%= admin.email %>"><%= admin.email %></a></td>
+          <td><%= admin.country %>, <%= admin.city %></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </main>
+</body>
+</html>

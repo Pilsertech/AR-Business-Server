@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>File Audit Log</title>
+  <link rel="stylesheet" href="/webedit/webedit.css" />
+</head>
+<body>
+  <div class="webedit-header">
+    <h1>File Audit Log</h1>
+    <nav>
+      <a href="/webedit">Web Editor</a>
+      <a href="/dashboard">Dashboard</a>
+    </nav>
+  </div>
+  <div class="webedit-main">
+    <h2>Recent File Actions</h2>
+    <table class="audit-table">
+      <tr>
+        <th>Time</th>
+        <th>User</th>
+        <th>Action</th>
+        <th>File</th>
+        <th>Diff/Detail</th>
+      </tr>
+      <% for (const log of logs) { %>
+        <tr>
+          <td><%= log.time %></td>
+          <td><%= log.who %></td>
+          <td><%= log.action %></td>
+          <td><%= log.file %></td>
+          <td>
+            <% if (log.action === "edit") { %>
+              <details>
+                <summary>Show diff</summary>
+                <pre style="max-width:400px;overflow-x:auto;"><%= logDiff(log.oldContent, log.newContent) %></pre>
+              </details>
+            <% } %>
+            <% if (log.action === "create" || log.action === "mkdir") { %>
+              <span>Created</span>
+            <% } %>
+            <% if (log.action === "delete" || log.action === "rmdir") { %>
+              <span>Deleted</span>
+            <% } %>
+            <% if (log.action === "upload") { %>
+              <span>Uploaded media</span>
+            <% } %>
+          </td>
+        </tr>
+      <% } %>
+    </table>
+  </div>
+  <script src="/webedit/webedit.js"></script>
+</body>
+</html>

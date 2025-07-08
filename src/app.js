@@ -15,6 +15,8 @@ import AdminUser from './models/AdminUser.js'; // ensures model is registered
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import flash from 'connect-flash';
+import adminManageRoutes from './routes/adminManageRoutes.js';
+import webeditRoutes from './routes/webeditRoutes.js';
 
 dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -84,11 +86,74 @@ app.use('/vendor', express.static(path.join(__dirname, '../public/vendor')));
 app.use('/viewCss', express.static(path.join(__dirname, 'views/viewCss')));
 app.use('/viewJs', express.static(path.join(__dirname, 'views/viewJs')));
 
+// NEW: Serve static files for website UI (css/js)
+app.use('/website', express.static(path.join(__dirname, 'views/website')));
+// for managind admins
+app.use('/dashboard/admins', adminManageRoutes);
+app.use('/webedit', webeditRoutes);
+
 /* ── View engine (EJS) ─────────────────────────────────── */
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-/* ── Routes ────────────────────────────────────────────── */
+/* ── Website public routes ─────────────────────────────── */
+app.get('/website/', (req, res) => {
+  res.render('website/index');
+});
+
+app.get('/website/ar-admins', async (req, res) => {
+  try {
+    // Only list admins who are approved and not locked/terminated, for public listing
+    const arAdmins = await AdminUser.findAll({
+      where: {
+        isApproved: true,
+        locked: false
+      },
+      attributes: ['fullName', 'email', 'phone', 'country', 'city'] // update as per your model
+    });
+    res.render('website/ar-admins', { arAdmins });
+  } catch (err) {
+    console.error(err);
+    req.flash('error', 'Failed to load AR admins.');
+    res.render('website/ar-admins', { arAdmins: [] });
+  }
+});
+
+app.get('/website/register-admin', (req, res) => {
+  res.render('website/register-admin');
+});
+
+app.post('/website/register-admin', async (req, res) => {
+  // Basic form data: fullName, email, phone, country, city, username, password
+  const { fullName, email, phone, country, city, username, password } = req.body;
+  try {
+    // Check if user/email already exists
+    const existing = await AdminUser.findOne({ where: { email } });
+    if (existing) {
+      req.flash('error', 'Email already registered.');
+      return res.redirect('/website/register-admin');
+    }
+    await AdminUser.create({
+      fullName,
+      email,
+      phone,
+      country,
+      city,
+      username,
+      password, // You should hash password before saving in production!
+      isApproved: false, // Main admin must approve new admins
+      locked: false
+    });
+    req.flash('success', 'Registration submitted! Await approval by main admin.');
+    res.redirect('/website/register-admin');
+  } catch (err) {
+    console.error(err);
+    req.flash('error', 'Registration failed. Please try again.');
+    res.redirect('/website/register-admin');
+  }
+});
+
+/* ── Main app routes ───────────────────────────────────── */
 app.use('/auth', authRoutes); // login / logout / register
 app.use('/dashboard', dashboardRoutes);
 app.use('/api', arContentRoutes); // JSON CRUD
@@ -102,13 +167,10 @@ app.get('/', (_req, res) => res.send('AR Business Server 2.1 – OK'));
 // General error handler for JSON APIs and other errors
 app.use((err, req, res, next) => {
   console.error(err.stack || err);
-  // If response is already sent, delegate to default Express handler
   if (res.headersSent) return next(err);
-  // If it's an AJAX/JSON request, send JSON error
   if (req.xhr || req.headers.accept?.includes('json')) {
     return res.status(500).json({ error: 'Internal server error' });
   }
-  // Otherwise, flash error and redirect back
   req.flash('error', 'An unexpected error occurred. Please try again.');
   res.redirect('back');
 });
@@ -118,21 +180,23 @@ app.use((err, req, res, next) => {
   try {
     await sequelize.authenticate();
     console.log('✅ SQL Server connection OK');
-
-    // Ensure tables exist and are up to date
     await sequelize.sync();
     console.log('🔄 Models synchronized');
-
-    // Create default admin user if none exist
     const adminCount = await AdminUser.count();
     if (adminCount === 0) {
       await AdminUser.create({
         email: 'admin@example.com',
         password: 'password123', // Change this in .env for security
+        fullName: 'Main Admin',
+        phone: '+0000000000',
+        country: 'YourCountry',
+        city: 'YourCity',
+        username: 'admin',
+        isApproved: true,
+        locked: false
       });
       console.log('✅ Default admin user created: admin@example.com');
     }
-
     const APP_PORT = process.env.PORT || 5000;
     app.listen(APP_PORT, () =>
       console.log(`🚀 Server listening on http://localhost:${APP_PORT}`)

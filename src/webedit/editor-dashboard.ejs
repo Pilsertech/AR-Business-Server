@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Web File Editor</title>
+  <link rel="stylesheet" href="/webedit/webedit.css" />
+</head>
+<body>
+  <div class="webedit-header">
+    <h1>Web File Editor</h1>
+    <nav>
+      <a href="/webedit/audit">Audit Log</a>
+      <a href="/dashboard">Back to Dashboard</a>
+    </nav>
+  </div>
+  <div class="webedit-main">
+    <h2>Folder: <%= folder %></h2>
+    <ul class="file-list">
+      <% for (const file of files) { %>
+        <li>
+          <% if (file.isDirectory()) { %>
+            <span>📁</span>
+            <a href="/webedit?folder=<%= encodeURIComponent(path.join(folder, file.name)) %>"><%= file.name %></a>
+            <form method="POST" action="/webedit/delete" style="display:inline" onsubmit="return confirm('Delete folder and all content?');">
+              <input type="hidden" name="target" value="<%= path.join(folder, file.name) %>" />
+              <button type="submit" class="btn-delete">Delete</button>
+            </form>
+          <% } else { %>
+            <span>📄</span>
+            <a href="/webedit/view?file=<%= encodeURIComponent(path.join(folder, file.name)) %>"><%= file.name %></a>
+            <form method="POST" action="/webedit/delete" style="display:inline" onsubmit="return confirm('Delete this file?');">
+              <input type="hidden" name="target" value="<%= path.join(folder, file.name) %>" />
+              <button type="submit" class="btn-delete">Delete</button>
+            </form>
+          <% } %>
+        </li>
+      <% } %>
+    </ul>
+    <hr/>
+    <form id="create-form">
+      <input type="hidden" name="folder" value="<%= folder %>"/>
+      <input name="name" placeholder="New file or folder name" required />
+      <select name="type">
+        <option value="file">File</option>
+        <option value="folder">Folder</option>
+      </select>
+      <button type="submit">Create</button>
+    </form>
+  </div>
+  <script src="/webedit/webedit.js"></script>
+</body>
+</html>

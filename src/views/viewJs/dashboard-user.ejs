@@ -1,13 +1,9 @@
-<% /*  =========================================================================
-     views/dashboard.ejs
-     Admin list with marker status & action buttons
-     ========================================================================= */ %>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Admin Dashboard</title>
+  <title>My AR Content Dashboard</title>
   <link rel="stylesheet" href="/viewCss/dashboard.css" />
   <script src="/viewJs/dashboard.js" defer></script>
 </head>
@@ -21,12 +17,11 @@
 
   <!-- Header -->
   <div class="header">
-    <h1>AR Content Dashboard</h1>
+    <h1>My AR Content</h1>
     <div class="header-buttons">
       <a href="/dashboard/new">＋ Add New Content</a>
-      <a href="/admins" class="admin-btn">Manage Admins</a>
+      <a href="/dashboard/manage-account" class="admin-btn">Manage Password / Username</a>
       <a href="/auth/logout" class="logout-btn">Logout</a>
-      <a href="/dashboard/admins" class="admin-btn">Manage Admins</a>
     </div>
   </div>
 
@@ -47,11 +42,9 @@
       <% } %>
       <% contents.forEach(item => { %>
         <tr>
-          <!-- Title (tooltip = description) -->
           <td title="<%= item.description || '' %>"><%= item.title %></td>
           <td><%= item.assetType %></td>
           <td><%= item.contentType %></td>
-          <!-- Marker status -->
           <td>
             <% if (item.contentType === 'marker') { %>
               <% const files = Array.isArray(item.markerFiles)
@@ -64,7 +57,6 @@
               <% } %>
             <% } else { %> — <% } %>
           </td>
-          <!-- Action buttons -->
           <td>
             <div class="btn-group">
               <a class="btn edit-btn" href="/dashboard/edit/<%= item.slug %>">Edit</a>

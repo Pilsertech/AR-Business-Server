@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>View/Edit File</title>
+  <link rel="stylesheet" href="/webedit/webedit.css" />
+</head>
+<body>
+  <div class="webedit-header">
+    <h1>View/Edit File</h1>
+    <nav>
+      <a href="/webedit?folder=<%= encodeURIComponent(require('path').dirname(file)) %>">Back to Folder</a>
+      <a href="/webedit/audit">Audit Log</a>
+      <a href="/dashboard">Dashboard</a>
+    </nav>
+  </div>
+  <div class="webedit-main">
+    <h2><%= file %></h2>
+    <% if (isBinary) { %>
+      <p>This is a binary file (image or media). To replace, upload a new file:</p>
+      <form id="upload-form" enctype="multipart/form-data">
+        <input type="file" name="media" required />
+        <input type="hidden" name="destPath" value="<%= file %>"/>
+        <button type="submit">Upload/Replace</button>
+      </form>
+      <% if (['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'].includes(ext)) { %>
+        <img src="<%= file.replace(/^public/, '') %>" style="max-width:600px;" />
+      <% } %>
+      <% if (['.mp4', '.webm'].includes(ext)) { %>
+        <video controls style="max-width:600px;">
+          <source src="<%= file.replace(/^public/, '') %>">
+        </video>
+      <% } %>
+    <% } else { %>
+      <% if (editing) { %>
+        <form id="edit-form">
+          <textarea name="content" style="width:95%;height:420px;"><%= content %></textarea>
+          <input type="hidden" name="file" value="<%= file %>"/>
+          <button type="submit">Save Changes</button>
+        </form>
+      <% } else { %>
+        <pre style="white-space:pre-wrap;background:#f9f9f9;padding:1em;"><%= content %></pre>
+        <a href="/webedit/edit?file=<%= encodeURIComponent(file) %>">Edit this file</a>
+      <% } %>
+    <% } %>
+  </div>
+  <script src="/webedit/webedit.js"></script>
+</body>
+</html>

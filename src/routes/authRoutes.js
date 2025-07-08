@@ -1,5 +1,3 @@
-// src/routes/authRoutes.js
-
 import { Router } from 'express';
 import AdminUser from '../models/AdminUser.js';
 
@@ -25,7 +23,13 @@ router.post('/login', async (req, res) => {
   }
 
   req.session.userId = user.id;
-  res.redirect('/dashboard');
+
+  // Role-based redirect
+  if (user.isMainAdmin) {
+    res.redirect('/dashboard/admins');
+  } else {
+    res.redirect('/dashboard');
+  }
 });
 
 // Logout

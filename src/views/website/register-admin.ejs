@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Register as AR Admin | AR Business Platform</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <link rel="stylesheet" href="/website/website.css" />
+  <script src="/website/website.js" defer></script>
+</head>
+<body>
+  <header class="landing-header">
+    <a href="/website/" class="back-link">&larr; Home</a>
+    <h2>Register as an AR Admin</h2>
+  </header>
+  <main class="main-content">
+    <form class="register-admin-form" action="/website/register-admin" method="POST" autocomplete="off">
+      <div class="form-group">
+        <label for="fullName">Full Name(s)</label>
+        <input id="fullName" name="fullName" type="text" required />
+      </div>
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input id="email" name="email" type="email" required />
+      </div>
+      <div class="form-group">
+        <label for="phone">Phone Number(s)</label>
+        <input id="phone" name="phone" type="text" required placeholder="e.g. +1234567890, +0987654321" />
+      </div>
+      <div class="form-group">
+        <label for="country">Country</label>
+        <input id="country" name="country" type="text" required />
+      </div>
+      <div class="form-group">
+        <label for="city">City</label>
+        <input id="city" name="city" type="text" required />
+      </div>
+      <div class="form-group">
+        <label for="username">Preferred Username</label>
+        <input id="username" name="username" type="text" required />
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required />
+      </div>
+      <button type="submit" class="cta">Register</button>
+    </form>
+    <p class="info-note">Already an admin? <a href="/auth/login">Sign in here</a></p>
+  </main>
+</body>
+</html>
