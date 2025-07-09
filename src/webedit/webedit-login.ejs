@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/webedit/css/login.css" />
 </head>
 <body>
+  <!-- DEBUG: If you see this, EJS template loaded! -->
   <div class="login-container">
     <div class="login-box">
       <div class="login-logo">
@@ -19,7 +20,15 @@
       <% if (success && success.length > 0) { %>
         <div class="alert alert-success"><%= success[0] %></div>
       <% } %>
+      <% if (typeof message !== 'undefined' && message && message.length > 0) { %>
+        <div class="alert alert-info"><%= message[0] %></div>
+      <% } %>
       <form action="/webedit/login" method="post" autocomplete="off" id="loginForm">
+        <!-- Optionally add CSRF token if you use csrf protection
+        <% if (typeof csrfToken !== "undefined") { %>
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <% } %>
+        -->
         <div class="form-group">
           <label for="email">Email</label>
           <input type="email" name="email" id="email" required autofocus />

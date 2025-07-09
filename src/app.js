@@ -5,19 +5,21 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
 import { sequelize } from './config/database.js';
 import arContentRoutes from './routes/arContentRoutes.js';
 import authRoutes from './routes/authRoutes.js';
-import AdminUser from './models/AdminUser.js'; // ensures model is registered
+import AdminUser from './models/AdminUser.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import flash from 'connect-flash';
 import adminManageRoutes from './routes/adminManageRoutes.js';
 import webeditRoutes from './routes/webeditRoutes.js';
 import passport from './config/passport.js';
+import { renderWebedit } from './utils/webeditRender.js'; // <-- Use the helper
 
 dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -50,14 +52,13 @@ app.use(
 );
 app.use(cors());
 
-/* Session middleware (stores auth login) */
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'super‑secret',
     resave: false,
     saveUninitialized: false,
     cookie: {
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       sameSite: 'lax'
@@ -65,13 +66,10 @@ app.use(
   })
 );
 
-app.use(flash()); // <-- Place immediately after session!
-
-// Passport.js initialization (after session)
+app.use(flash());
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Make flash messages available in all templates
 app.use((req, res, next) => {
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
@@ -89,39 +87,23 @@ app.use('/targets', express.static(path.join(__dirname, '../public/targets')));
 app.use('/qr', express.static(path.join(__dirname, '../public/qr')));
 app.use('/js', express.static(path.join(__dirname, '../public/js')));
 app.use('/vendor', express.static(path.join(__dirname, '../public/vendor')));
-// For legacy view assets
 app.use('/viewCss', express.static(path.join(__dirname, 'views/viewCss')));
 app.use('/viewJs', express.static(path.join(__dirname, 'views/viewJs')));
-
-// Serve static files for website UI (css/js)
 app.use('/website', express.static(path.join(__dirname, 'views/website')));
-
-// Serve static files for webedit UI (css/js) -- for login, dashboard, etc
 app.use('/webedit/css', express.static(path.join(__dirname, 'webedit/css')));
 app.use('/webedit/js', express.static(path.join(__dirname, 'webedit/js')));
 
 /* ── View engine (EJS) ─────────────────────────────────── */
-// For legacy routes (dashboard, etc.): views directory is src/views
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-/* --- Webedit-specific EJS rendering: set views to src/webedit for webedit routes --- */
-const webeditViews = path.join(__dirname, 'webedit');
-
 /* ── Secure admin-only middleware for webedit ───────────── */
-/**
- * Only allow:
- *  - Main admin (username: 'admin')
- *  - Other admins who are isApproved === true and locked === false
- *  - Must be logged in
- */
 async function ensureAdminAuthenticated(req, res, next) {
   if (!req.isAuthenticated || !req.isAuthenticated()) {
     req.flash('error', 'Please log in as an approved admin.');
     return res.redirect('/webedit/login');
   }
   try {
-    // Fetch fresh user from database for the latest status
     const user = await AdminUser.findByPk(req.user.id);
     if (
       user && (
@@ -129,7 +111,7 @@ async function ensureAdminAuthenticated(req, res, next) {
         (user.isApproved === true && user.locked === false)
       )
     ) {
-      req.user = user; // Update user in request
+      req.user = user;
       return next();
     }
     req.flash('error', 'You are not authorized to access this page.');
@@ -143,11 +125,11 @@ async function ensureAdminAuthenticated(req, res, next) {
 
 /* ── Core and dashboard/admin routes ───────────────────── */
 app.use('/dashboard/admins', adminManageRoutes);
-app.use('/auth', authRoutes); // login / logout / register
+app.use('/auth', authRoutes);
 app.use('/dashboard', dashboardRoutes);
-app.use('/api', arContentRoutes); // JSON CRUD
+app.use('/api', arContentRoutes);
 app.use('/admins', adminRoutes);
-app.use('/', arContentRoutes); // /card/:slug page
+app.use('/', arContentRoutes);
 
 /* ── Website public routes ─────────────────────────────── */
 app.get('/website/', (req, res) => {
@@ -156,7 +138,6 @@ app.get('/website/', (req, res) => {
 
 app.get('/website/ar-admins', async (req, res) => {
   try {
-    // Only list admins who are approved and not locked/terminated, for public listing
     const arAdmins = await AdminUser.findAll({
       where: {
         isApproved: true,
@@ -177,10 +158,8 @@ app.get('/website/register-admin', (req, res) => {
 });
 
 app.post('/website/register-admin', async (req, res) => {
-  // Basic form data: fullName, email, phone, country, city, username, password
   const { fullName, email, phone, country, city, username, password } = req.body;
   try {
-    // Check if user/email already exists
     const existing = await AdminUser.findOne({ where: { email } });
     if (existing) {
       req.flash('error', 'Email already registered.');
@@ -193,8 +172,8 @@ app.post('/website/register-admin', async (req, res) => {
       country,
       city,
       username,
-      password, // You should hash password before saving in production!
-      isApproved: false, // Main admin must approve new admins
+      password,
+      isApproved: false,
       locked: false
     });
     req.flash('success', 'Registration submitted! Await approval by main admin.');
@@ -207,12 +186,12 @@ app.post('/website/register-admin', async (req, res) => {
 });
 
 /* ── Webedit login/logout/dashboard routes ──────────────── */
-// GET login page for webedit (renders from src/webedit/login.ejs)
+// GET login page for webedit (renders from src/webedit/webedit-login.ejs)
 app.get('/webedit/login', (req, res) => {
-  res.render('login', {
+  renderWebedit(res, 'webedit-login', {
     error: res.locals.error,
     success: res.locals.success
-  }, { views: webeditViews });
+  });
 });
 
 // POST login for webedit (Passport)
@@ -226,18 +205,19 @@ app.post('/webedit/login',
     failureFlash: true
   }),
   (req, res) => {
-    // Only allow main admin or isApproved
     if (req.user && (req.user.username === 'admin' || (req.user.isApproved && !req.user.locked))) {
       res.redirect('/webedit/editor-dashboard');
     } else {
       req.logout(() => {});
       req.flash('error', 'Access denied.');
-      res.redirect('/webedit/login');
+      renderWebedit(res, 'webedit-login', {
+        error: ['Access denied.'],
+        success: []
+      });
     }
   }
 );
 
-// Logout for webedit
 app.get('/webedit/logout', (req, res, next) => {
   req.logout(function(err) {
     if (err) { return next(err); }
@@ -248,18 +228,18 @@ app.get('/webedit/logout', (req, res, next) => {
   });
 });
 
-// Redirect /webedit to login if not authenticated, else to dashboard
 app.get('/webedit', (req, res, next) => {
   if (!req.isAuthenticated || !req.isAuthenticated()) {
     return res.redirect('/webedit/login');
   }
-  // Optional: You can add more checks here if needed (e.g. main admin/approved)
   return res.redirect('/webedit/editor-dashboard');
 });
 
 // Protected dashboard for webedit (renders from src/webedit/editor-dashboard.ejs)
 app.get('/webedit/editor-dashboard', ensureAdminAuthenticated, (req, res) => {
-  res.render('editor-dashboard', { user: req.user }, { views: webeditViews });
+  renderWebedit(res, 'editor-dashboard', {
+    user: req.user
+  });
 });
 
 // Attach the rest of webedit routes (must be last for /webedit/*)
@@ -290,7 +270,7 @@ app.use((err, req, res, next) => {
     if (adminCount === 0) {
       await AdminUser.create({
         email: 'admin@example.com',
-        password: 'password123', // Change this in .env for security
+        password: 'password123',
         fullName: 'Main Admin',
         phone: '+0000000000',
         country: 'YourCountry',

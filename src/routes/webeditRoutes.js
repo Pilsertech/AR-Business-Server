@@ -3,6 +3,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
+import { renderWebedit } from '../utils/webeditRender.js'; // Helper for webedit EJS rendering
 
 // File root directories (edit as needed)
 const SAFE_ROOTS = [
@@ -35,15 +36,15 @@ function requireWebEditAccess(req, res, next) {
 function isFolderAllowed(folder, user) {
   if (user.isMainAdmin) return true;
   if (user.canWebEdit) {
-    // Example: trusted users can only access public/upload and subfolders
     const allowedRoot = path.resolve('public/upload');
     return path.resolve(folder).startsWith(allowedRoot);
   }
   return false;
 }
 
-/* ───────────── LIST FILES ───────────── */
 const router = Router();
+
+/* ───────────── LIST FILES ───────────── */
 router.get('/', requireWebEditAccess, async (req, res) => {
   const folder = req.query.folder || SAFE_ROOTS[0];
   const absFolder = path.resolve(folder);
@@ -51,7 +52,7 @@ router.get('/', requireWebEditAccess, async (req, res) => {
     return res.status(403).send('Forbidden (folder access)');
   try {
     const files = await fs.readdir(absFolder, { withFileTypes: true });
-    res.render('webedit/editor-dashboard', {
+    renderWebedit(res, 'editor-dashboard', {
       folder: absFolder,
       files,
       SAFE_ROOTS
@@ -77,7 +78,9 @@ router.get('/view', requireWebEditAccess, async (req, res) => {
     } else {
       content = await fs.readFile(file, 'utf-8');
     }
-    res.render('webedit/file-viewer', { file, content, isBinary, ext });
+    renderWebedit(res, 'file-viewer', {
+      file, content, isBinary, ext
+    });
   } catch (e) {
     res.status(500).send('Cannot open file');
   }
@@ -90,7 +93,9 @@ router.get('/edit', requireWebEditAccess, async (req, res) => {
     return res.status(403).send('Forbidden (file access)');
   try {
     const content = await fs.readFile(file, 'utf-8');
-    res.render('webedit/file-viewer', { file, content, isBinary: false, editing: true });
+    renderWebedit(res, 'file-viewer', {
+      file, content, isBinary: false, editing: true
+    });
   } catch (e) {
     res.status(500).send('Cannot open file');
   }
@@ -176,7 +181,7 @@ router.get('/audit', requireWebEditAccess, async (req, res) => {
       const raw = await fs.readFile(logPath, 'utf-8');
       logs = raw.trim().split('\n').map(JSON.parse).reverse();
     } catch {}
-    res.render('webedit/audit-log', { logs });
+    renderWebedit(res, 'audit-log', { logs });
   } catch (e) {
     res.status(500).send('Audit log unavailable');
   }
