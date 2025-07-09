@@ -143,7 +143,6 @@ async function ensureAdminAuthenticated(req, res, next) {
 
 /* ── Core and dashboard/admin routes ───────────────────── */
 app.use('/dashboard/admins', adminManageRoutes);
-app.use('/webedit', webeditRoutes);
 app.use('/auth', authRoutes); // login / logout / register
 app.use('/dashboard', dashboardRoutes);
 app.use('/api', arContentRoutes); // JSON CRUD
@@ -249,10 +248,22 @@ app.get('/webedit/logout', (req, res, next) => {
   });
 });
 
+// Redirect /webedit to login if not authenticated, else to dashboard
+app.get('/webedit', (req, res, next) => {
+  if (!req.isAuthenticated || !req.isAuthenticated()) {
+    return res.redirect('/webedit/login');
+  }
+  // Optional: You can add more checks here if needed (e.g. main admin/approved)
+  return res.redirect('/webedit/editor-dashboard');
+});
+
 // Protected dashboard for webedit (renders from src/webedit/editor-dashboard.ejs)
 app.get('/webedit/editor-dashboard', ensureAdminAuthenticated, (req, res) => {
   res.render('editor-dashboard', { user: req.user }, { views: webeditViews });
 });
+
+// Attach the rest of webedit routes (must be last for /webedit/*)
+app.use('/webedit', webeditRoutes);
 
 /* ── Health check ─────────────────────────────────────── */
 app.get('/', (_req, res) => res.send('AR Business Server 2.1 – OK'));
@@ -292,9 +303,7 @@ app.use((err, req, res, next) => {
     }
     const APP_PORT = process.env.PORT || 5000;
     app.listen(APP_PORT, () =>
-      
       console.log(`🚀 Server listening on http://localhost:${APP_PORT}`)
-      
     );
     console.log('DEBUG: process.env.PORT =', process.env.PORT);
   } catch (e) {
