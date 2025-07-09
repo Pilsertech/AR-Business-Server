@@ -51,10 +51,11 @@ router.get('/', requireWebEditAccess, async (req, res) => {
     return res.status(403).send('Forbidden (folder access)');
   try {
     const files = await fs.readdir(absFolder, { withFileTypes: true });
-    res.render('webedit/editor-dashboard', {
+    res.render('webedit-editor-dashboard', {
       folder: absFolder,
       files,
-      SAFE_ROOTS
+      SAFE_ROOTS,
+      path // Pass path module to template
     });
   } catch (e) {
     res.status(500).send('Cannot read folder');
@@ -77,7 +78,7 @@ router.get('/view', requireWebEditAccess, async (req, res) => {
     } else {
       content = await fs.readFile(file, 'utf-8');
     }
-    res.render('webedit/file-viewer', { file, content, isBinary, ext });
+    res.render('webedit-file-viewer', { file, content, isBinary, ext });
   } catch (e) {
     res.status(500).send('Cannot open file');
   }
@@ -90,7 +91,7 @@ router.get('/edit', requireWebEditAccess, async (req, res) => {
     return res.status(403).send('Forbidden (file access)');
   try {
     const content = await fs.readFile(file, 'utf-8');
-    res.render('webedit/file-viewer', { file, content, isBinary: false, editing: true });
+    res.render('webedit-file-viewer', { file, content, isBinary: false, editing: true });
   } catch (e) {
     res.status(500).send('Cannot open file');
   }
@@ -176,7 +177,7 @@ router.get('/audit', requireWebEditAccess, async (req, res) => {
       const raw = await fs.readFile(logPath, 'utf-8');
       logs = raw.trim().split('\n').map(JSON.parse).reverse();
     } catch {}
-    res.render('webedit/audit-log', { logs });
+    res.render('webedit-audit-log', { logs });
   } catch (e) {
     res.status(500).send('Audit log unavailable');
   }

@@ -105,8 +105,7 @@ app.use('/webedit/js', express.static(path.join(__dirname, 'webedit/js')));
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
-/* --- Webedit-specific EJS rendering: set views to src/webedit for webedit routes --- */
-const webeditViews = path.join(__dirname, 'webedit');
+/* --- All EJS views now use standard src/views directory --- */
 
 /* ── Secure admin-only middleware for webedit ───────────── */
 /**
@@ -207,12 +206,12 @@ app.post('/website/register-admin', async (req, res) => {
 });
 
 /* ── Webedit login/logout/dashboard routes ──────────────── */
-// GET login page for webedit (renders from src/webedit/login.ejs)
+// GET login page for webedit (renders from src/views/webedit-login.ejs)
 app.get('/webedit/login', (req, res) => {
-  res.render('login', {
+  res.render('webedit-login', {
     error: res.locals.error,
     success: res.locals.success
-  }, { views: webeditViews });
+  });
 });
 
 // POST login for webedit (Passport)
@@ -248,18 +247,19 @@ app.get('/webedit/logout', (req, res, next) => {
   });
 });
 
-// Redirect /webedit to login if not authenticated, else to dashboard
+// Redirect /webedit to login if not authenticated, else to the main webedit interface  
 app.get('/webedit', (req, res, next) => {
   if (!req.isAuthenticated || !req.isAuthenticated()) {
     return res.redirect('/webedit/login');
   }
-  // Optional: You can add more checks here if needed (e.g. main admin/approved)
-  return res.redirect('/webedit/editor-dashboard');
+  // Redirect to the main webedit route that's handled by webeditRoutes
+  // The webeditRoutes.js handles the / route with file listing
+  next(); // Let webeditRoutes handle this
 });
 
-// Protected dashboard for webedit (renders from src/webedit/editor-dashboard.ejs)
+// Protected dashboard for webedit - redirect to main webedit interface
 app.get('/webedit/editor-dashboard', ensureAdminAuthenticated, (req, res) => {
-  res.render('editor-dashboard', { user: req.user }, { views: webeditViews });
+  res.redirect('/webedit');
 });
 
 // Attach the rest of webedit routes (must be last for /webedit/*)
@@ -297,6 +297,8 @@ app.use((err, req, res, next) => {
         city: 'YourCity',
         username: 'admin',
         isApproved: true,
+        isMainAdmin: true, // Main admin has full access
+        canWebEdit: true,  // Can use webedit functionality
         locked: false
       });
       console.log('✅ Default admin user created: admin@example.com');
