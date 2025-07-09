@@ -27,6 +27,8 @@
     "multer": "^2.0.1",
     "mysql2": "^3.9.5",
     "nanoid": "^5.1.5",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0",
     "qrcode": "^1.5.3",
     "sequelize": "^6.37.7",
     "tedious": "^16.7.1",

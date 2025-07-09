@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <title>Manage Admin Accounts</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <link rel="stylesheet" href="/viewCss/dashboard.css" />
-  <script src="/viewJs/dashboard.js" defer></script>
+  <link rel="stylesheet" href="/viewCss/manage-admins.css" />
+  <script src="/viewJs/manage-admins.js" defer></script>
 </head>
 <body>
   <div class="header">
@@ -14,6 +14,7 @@
       <a href="/dashboard" class="admin-btn">← Back to Dashboard</a>
     </div>
   </div>
+
   <% if (success && success.length) { %>
     <div class="flash-message success"><%= success[0] %></div>
   <% } %>
@@ -21,62 +22,99 @@
     <div class="flash-message error"><%= error[0] %></div>
   <% } %>
 
-  <table class="admin-table">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Username</th>
-        <th>Email</th>
-        <th>Phone</th>
-        <th>Location</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% admins.forEach(a => { %>
-        <tr>
-          <td><%= a.fullName %></td>
-          <td><%= a.username %></td>
-          <td><%= a.email %></td>
-          <td><%= a.phone %></td>
-          <td><%= a.country %>, <%= a.city %></td>
-          <td>
-            <% if(a.locked) { %>
-              <span class="status-missing">Locked</span>
-            <% } else { %>
-              <span class="status-ok">Active</span>
-            <% } %>
-            <% if(a.isMainAdmin) { %>
-              <span class="status-ok">(Main)</span>
-            <% } %>
-          </td>
-          <td>
-            <% if (!a.isMainAdmin) { %>
-              <form method="POST" action="/dashboard/admins/<%= a.id %>/lock" style="display:inline">
-                <button type="submit" class="btn lock-btn"><%= a.locked ? "Unlock" : "Lock" %></button>
-              </form>
-              <form method="POST" action="/dashboard/admins/<%= a.id %>/delete" style="display:inline" onsubmit="return confirm('Are you sure you want to delete this admin?');">
-                <button type="submit" class="btn delete-btn">Delete</button>
-              </form>
-            <% } %>
-          </td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
+  <div class="main-content">
+    <section class="admins-section">
+      <h2 class="section-title">Admin Accounts</h2>
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% admins.forEach(a => { %>
+            <tr>
+              <td><%= a.fullName %></td>
+              <td><%= a.username %></td>
+              <td><%= a.email %></td>
+              <td><%= a.phone %></td>
+              <td><%= a.country %>, <%= a.city %></td>
+              <td>
+                <% if(a.locked) { %>
+                  <span class="status-missing">Locked</span>
+                <% } else { %>
+                  <span class="status-ok">Active</span>
+                <% } %>
+                <% if(a.isMainAdmin) { %>
+                  <span class="status-ok">(Main)</span>
+                <% } %>
+              </td>
+              <td>
+                <% if (!a.isMainAdmin) { %>
+                  <form method="POST" action="/dashboard/admins/<%= a.id %>/lock" style="display:inline">
+                    <button type="submit" class="btn lock-btn"><%= a.locked ? "Unlock" : "Lock" %></button>
+                  </form>
+                  <form method="POST" action="/dashboard/admins/<%= a.id %>/delete" style="display:inline" onsubmit="return confirm('Are you sure you want to delete this admin?');">
+                    <button type="submit" class="btn delete-btn">Delete</button>
+                  </form>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
 
-  <hr />
-  <h2>Add New Admin</h2>
+    <hr />
+
+    <section class="add-admin-section">
+  <h2 class="section-title">Add New Admin</h2>
   <form method="POST" action="/dashboard/admins/add" class="admin-add-form">
-    <div class="form-group"><label>Full Name <input name="fullName" required /></label></div>
-    <div class="form-group"><label>Email <input name="email" type="email" required /></label></div>
-    <div class="form-group"><label>Phone <input name="phone" required /></label></div>
-    <div class="form-group"><label>Country <input name="country" required /></label></div>
-    <div class="form-group"><label>City <input name="city" required /></label></div>
-    <div class="form-group"><label>Username <input name="username" required /></label></div>
-    <div class="form-group"><label>Password <input name="password" type="password" required /></label></div>
-    <button class="btn admin-btn" type="submit">Add Admin</button>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="fullName">Full Name</label>
+        <input id="fullName" name="fullName" type="text" required placeholder="Enter full name" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" required placeholder="Enter email address" autocomplete="off" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="phone">Phone</label>
+        <input id="phone" name="phone" type="text" required placeholder="Enter phone number" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label for="country">Country</label>
+        <input id="country" name="country" type="text" required placeholder="Country" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label for="city">City</label>
+        <input id="city" name="city" type="text" required placeholder="City" autocomplete="off" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" required placeholder="Create a username" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required placeholder="Create a password" autocomplete="new-password" />
+      </div>
+    </div>
+    <div class="form-row form-row-actions">
+      <button class="btn admin-btn" type="submit">Add Admin</button>
+    </div>
   </form>
+</section>
+  </div>
 </body>
 </html>

@@ -1,5 +1,3 @@
-// src/routes/adminRoutes.js
-
 import { Router } from 'express';
 import AdminUser from '../models/AdminUser.js';
 import { requireLogin } from '../middleware/authMiddleware.js';
@@ -7,24 +5,29 @@ import { requireLogin } from '../middleware/authMiddleware.js';
 const router = Router();
 router.use(requireLogin);
 
-// GET /admins - Admin management page
-router.get('/', async (req, res) => {
-  const admins = await AdminUser.findAll({ attributes: ['id', 'email', 'locked'] });
-  // Always pass success and error for EJS view
+// Middleware to restrict certain actions to main admin (if desired)
+function requireMainAdmin(req, res, next) {
+  if (req.user && req.user.isMainAdmin) return next();
+  return res.status(403).send('Forbidden');
+}
+
+// GET /admins - Admin management page (main admin only)
+router.get('/', requireMainAdmin, async (req, res) => {
+  const admins = await AdminUser.findAll({ attributes: ['id', 'email', 'locked', 'isMainAdmin'] });
   const success = req.flash ? req.flash('success') : [];
   const error = req.flash ? req.flash('error') : [];
   res.render('admins', { admins, currentUserId: req.session.userId, success, error });
 });
 
-// GET new admin form
-router.get('/new', (req, res) => {
+// GET new admin form (main admin only)
+router.get('/new', requireMainAdmin, (req, res) => {
   const success = req.flash ? req.flash('success') : [];
   const error = req.flash ? req.flash('error') : [];
   res.render('new-admin', { success, error });
 });
 
-// POST /admins/change-password/:id - Change an admin's password
-router.post('/change-password/:id', async (req, res) => {
+// POST /admins/change-password/:id - Change an admin's password (main admin only)
+router.post('/change-password/:id', requireMainAdmin, async (req, res) => {
   const { newPassword } = req.body;
   const admin = await AdminUser.findByPk(req.params.id);
   if (!admin || admin.locked) {
@@ -37,15 +40,15 @@ router.post('/change-password/:id', async (req, res) => {
   res.redirect('/admins');
 });
 
-// POST /admins/lock/:id - Lock an admin (prevent login)
-router.post('/lock/:id', async (req, res) => {
+// POST /admins/lock/:id - Lock an admin (main admin only, prevent locking self or another main admin)
+router.post('/lock/:id', requireMainAdmin, async (req, res) => {
   if (parseInt(req.params.id, 10) === req.session.userId) {
     req.flash('error', 'You cannot lock your own account.');
     return res.redirect('/admins');
   }
   const admin = await AdminUser.findByPk(req.params.id);
-  if (!admin) {
-    req.flash('error', 'Admin not found.');
+  if (!admin || admin.isMainAdmin) {
+    req.flash('error', 'Admin not found or is main admin.');
     return res.redirect('/admins');
   }
   admin.locked = true;
@@ -54,8 +57,8 @@ router.post('/lock/:id', async (req, res) => {
   res.redirect('/admins');
 });
 
-// POST /admins/unlock/:id - Unlock an admin (allow login)
-router.post('/unlock/:id', async (req, res) => {
+// POST /admins/unlock/:id - Unlock an admin (main admin only)
+router.post('/unlock/:id', requireMainAdmin, async (req, res) => {
   const admin = await AdminUser.findByPk(req.params.id);
   if (!admin) {
     req.flash('error', 'Admin not found.');
@@ -67,11 +70,10 @@ router.post('/unlock/:id', async (req, res) => {
   res.redirect('/admins');
 });
 
-// POST new admin
-router.post('/new', async (req, res) => {
+// POST new admin (main admin only)
+router.post('/new', requireMainAdmin, async (req, res) => {
   const { email, password, password2 } = req.body;
 
-  // New: Validate password fields
   if (!password || !password2) {
     req.flash('error', 'Both password fields are required.');
     return res.redirect('/admins/new');
@@ -97,13 +99,18 @@ router.post('/new', async (req, res) => {
   }
 });
 
-// Delete an admin
-router.post('/delete/:id', async (req, res) => {
+// Delete an admin (main admin only, prevent deleting self or another main admin)
+router.post('/delete/:id', requireMainAdmin, async (req, res) => {
   if (parseInt(req.params.id, 10) === req.session.userId) {
     req.flash('error', 'You cannot delete your own account.');
     return res.redirect('/admins');
   }
-  await AdminUser.destroy({ where: { id: req.params.id } });
+  const admin = await AdminUser.findByPk(req.params.id);
+  if (!admin || admin.isMainAdmin) {
+    req.flash('error', 'Admin not found or is main admin.');
+    return res.redirect('/admins');
+  }
+  await admin.destroy();
   req.flash('success', 'Admin deleted.');
   res.redirect('/admins');
 });

@@ -17,10 +17,12 @@ import adminRoutes from './routes/adminRoutes.js';
 import flash from 'connect-flash';
 import adminManageRoutes from './routes/adminManageRoutes.js';
 import webeditRoutes from './routes/webeditRoutes.js';
+import passport from './config/passport.js'; // <-- Add passport import
 
 dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
+const path = require('path');
 
 /* ── Middleware ─────────────────────────────────────────── */
 app.use(
@@ -56,6 +58,7 @@ app.use(
     resave: false,
     saveUninitialized: false,
     cookie: {
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 1 week
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       sameSite: 'lax'
@@ -64,6 +67,10 @@ app.use(
 );
 
 app.use(flash()); // <-- Place immediately after session!
+
+// Passport.js initialization (after session)
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Make flash messages available in all templates
 app.use((req, res, next) => {
@@ -88,7 +95,7 @@ app.use('/viewJs', express.static(path.join(__dirname, 'views/viewJs')));
 
 // NEW: Serve static files for website UI (css/js)
 app.use('/website', express.static(path.join(__dirname, 'views/website')));
-// for managind admins
+// for managing admins
 app.use('/dashboard/admins', adminManageRoutes);
 app.use('/webedit', webeditRoutes);
 
@@ -96,9 +103,10 @@ app.use('/webedit', webeditRoutes);
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
+
 /* ── Website public routes ─────────────────────────────── */
 app.get('/website/', (req, res) => {
-  res.render('website/index');
+  res.render('website/index', { /* any variables here */ });
 });
 
 app.get('/website/ar-admins', async (req, res) => {
@@ -121,6 +129,10 @@ app.get('/website/ar-admins', async (req, res) => {
 
 app.get('/website/register-admin', (req, res) => {
   res.render('website/register-admin');
+});
+
+app.get('/webedit/editor-dashboard', (req, res) => {
+  res.render('webedit/editor-dashboard'); // Pass variables as second argument if needed
 });
 
 app.post('/website/register-admin', async (req, res) => {
