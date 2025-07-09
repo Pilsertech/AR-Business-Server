@@ -94,10 +94,47 @@ app.use('/viewJs', express.static(path.join(__dirname, 'views/viewJs')));
 
 // Serve static files for website UI (css/js)
 app.use('/website', express.static(path.join(__dirname, 'views/website')));
+// Serve static files for webedit UI (css/js)
+app.use('/webedit/css', express.static(path.join(__dirname, 'views/webedit/css')));
+app.use('/webedit/js', express.static(path.join(__dirname, 'views/webedit/js')));
 
 /* ── View engine (EJS) ─────────────────────────────────── */
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+
+/* ── Secure admin-only middleware for webedit ───────────── */
+/**
+ * Only allow:
+ *  - Main admin (username: 'admin')
+ *  - Other admins who are isApproved === true and locked === false
+ *  - Must be logged in
+ */
+async function ensureAdminAuthenticated(req, res, next) {
+  if (!req.isAuthenticated || !req.isAuthenticated()) {
+    req.flash('error', 'Please log in as an approved admin.');
+    return res.redirect('/webedit/login');
+  }
+  try {
+    // Fetch fresh user from database for the latest status
+    const user = await AdminUser.findByPk(req.user.id);
+    if (
+      user && (
+        user.username === 'admin' ||
+        (user.isApproved === true && user.locked === false)
+      )
+    ) {
+      // Authenticated and authorized
+      req.user = user; // update user in request
+      return next();
+    }
+    req.flash('error', 'You are not authorized to access this page.');
+    return res.redirect('/webedit/login');
+  } catch (e) {
+    console.error(e);
+    req.flash('error', 'Authentication failed.');
+    return res.redirect('/webedit/login');
+  }
+}
 
 /* ── Core and dashboard/admin routes ───────────────────── */
 app.use('/dashboard/admins', adminManageRoutes);
@@ -165,9 +202,53 @@ app.post('/website/register-admin', async (req, res) => {
   }
 });
 
-/* ── Webedit EJS route ─────────────────────────────────── */
-app.get('/webedit/editor-dashboard', (req, res) => {
-  res.render('webedit/editor-dashboard');
+/* ── Webedit EJS login and dashboard routes ────────────── */
+// Login page for webedit (GET)
+app.get('/webedit/login', (req, res) => {
+  // Show errors/success from flash
+  res.render('webedit/login', {
+    error: res.locals.error,
+    success: res.locals.success
+  });
+});
+
+// Login POST for webedit (with Passport)
+app.post('/webedit/login',
+  (req, res, next) => {
+    // If already logged in, redirect to dashboard
+    if (req.user) return res.redirect('/webedit/editor-dashboard');
+    next();
+  },
+  passport.authenticate('local', {
+    failureRedirect: '/webedit/login',
+    failureFlash: true
+  }),
+  (req, res) => {
+    // Only allow main admin or isApproved
+    if (req.user && (req.user.username === 'admin' || (req.user.isApproved && !req.user.locked))) {
+      res.redirect('/webedit/editor-dashboard');
+    } else {
+      req.logout(() => {});
+      req.flash('error', 'Access denied.');
+      res.redirect('/webedit/login');
+    }
+  }
+);
+
+// Logout for webedit
+app.get('/webedit/logout', (req, res, next) => {
+  req.logout(function(err) {
+    if (err) { return next(err); }
+    req.session.destroy(() => {
+      res.clearCookie('connect.sid');
+      res.redirect('/webedit/login');
+    });
+  });
+});
+
+// Protected dashboard route
+app.get('/webedit/editor-dashboard', ensureAdminAuthenticated, (req, res) => {
+  res.render('webedit/editor-dashboard', { user: req.user });
 });
 
 /* ── Health check ─────────────────────────────────────── */

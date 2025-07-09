@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Login | AR Business Platform</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/webedit/css/login.css" />
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-box">
+      <div class="login-logo">
+        <img src="/vendor/logo-ar.svg" alt="AR Business Platform" />
+      </div>
+      <h2>Admin Login</h2>
+      <% if (error && error.length > 0) { %>
+        <div class="alert alert-error"><%= error[0] %></div>
+      <% } %>
+      <% if (success && success.length > 0) { %>
+        <div class="alert alert-success"><%= success[0] %></div>
+      <% } %>
+      <form action="/webedit/login" method="post" autocomplete="off" id="loginForm">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" name="email" id="email" required autofocus />
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" name="password" id="password" required />
+        </div>
+        <button type="submit" class="btn-primary">Sign In</button>
+      </form>
+    </div>
+    <footer>
+      &copy; <%= new Date().getFullYear() %> AR Business Platform
+    </footer>
+  </div>
+  <script src="/webedit/js/login.js"></script>
+</body>
+</html>
