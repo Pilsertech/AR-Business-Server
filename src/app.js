@@ -89,18 +89,24 @@ app.use('/targets', express.static(path.join(__dirname, '../public/targets')));
 app.use('/qr', express.static(path.join(__dirname, '../public/qr')));
 app.use('/js', express.static(path.join(__dirname, '../public/js')));
 app.use('/vendor', express.static(path.join(__dirname, '../public/vendor')));
+// For legacy view assets
 app.use('/viewCss', express.static(path.join(__dirname, 'views/viewCss')));
 app.use('/viewJs', express.static(path.join(__dirname, 'views/viewJs')));
 
 // Serve static files for website UI (css/js)
 app.use('/website', express.static(path.join(__dirname, 'views/website')));
-// Serve static files for webedit UI (css/js)
-app.use('/webedit/css', express.static(path.join(__dirname, 'views/webedit/css')));
-app.use('/webedit/js', express.static(path.join(__dirname, 'views/webedit/js')));
+
+// Serve static files for webedit UI (css/js) -- for login, dashboard, etc
+app.use('/webedit/css', express.static(path.join(__dirname, 'webedit/css')));
+app.use('/webedit/js', express.static(path.join(__dirname, 'webedit/js')));
 
 /* ── View engine (EJS) ─────────────────────────────────── */
+// For legacy routes (dashboard, etc.): views directory is src/views
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
+
+/* --- Webedit-specific EJS rendering: set views to src/webedit for webedit routes --- */
+const webeditViews = path.join(__dirname, 'webedit');
 
 /* ── Secure admin-only middleware for webedit ───────────── */
 /**
@@ -123,8 +129,7 @@ async function ensureAdminAuthenticated(req, res, next) {
         (user.isApproved === true && user.locked === false)
       )
     ) {
-      // Authenticated and authorized
-      req.user = user; // update user in request
+      req.user = user; // Update user in request
       return next();
     }
     req.flash('error', 'You are not authorized to access this page.');
@@ -202,20 +207,18 @@ app.post('/website/register-admin', async (req, res) => {
   }
 });
 
-/* ── Webedit EJS login and dashboard routes ────────────── */
-// Login page for webedit (GET)
+/* ── Webedit login/logout/dashboard routes ──────────────── */
+// GET login page for webedit (renders from src/webedit/login.ejs)
 app.get('/webedit/login', (req, res) => {
-  // Show errors/success from flash
-  res.render('webedit/login', {
+  res.render('login', {
     error: res.locals.error,
     success: res.locals.success
-  });
+  }, { views: webeditViews });
 });
 
-// Login POST for webedit (with Passport)
+// POST login for webedit (Passport)
 app.post('/webedit/login',
   (req, res, next) => {
-    // If already logged in, redirect to dashboard
     if (req.user) return res.redirect('/webedit/editor-dashboard');
     next();
   },
@@ -246,16 +249,15 @@ app.get('/webedit/logout', (req, res, next) => {
   });
 });
 
-// Protected dashboard route
+// Protected dashboard for webedit (renders from src/webedit/editor-dashboard.ejs)
 app.get('/webedit/editor-dashboard', ensureAdminAuthenticated, (req, res) => {
-  res.render('webedit/editor-dashboard', { user: req.user });
+  res.render('editor-dashboard', { user: req.user }, { views: webeditViews });
 });
 
 /* ── Health check ─────────────────────────────────────── */
 app.get('/', (_req, res) => res.send('AR Business Server 2.1 – OK'));
 
 /* ── Error handler ────────────────────────────────────── */
-// General error handler for JSON APIs and other errors
 app.use((err, req, res, next) => {
   console.error(err.stack || err);
   if (res.headersSent) return next(err);
@@ -290,8 +292,11 @@ app.use((err, req, res, next) => {
     }
     const APP_PORT = process.env.PORT || 5000;
     app.listen(APP_PORT, () =>
+      
       console.log(`🚀 Server listening on http://localhost:${APP_PORT}`)
+      
     );
+    console.log('DEBUG: process.env.PORT =', process.env.PORT);
   } catch (e) {
     console.error('❌ DB connection failed:', e);
     process.exit(1);
