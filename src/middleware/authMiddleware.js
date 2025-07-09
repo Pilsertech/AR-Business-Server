@@ -1,11 +1,24 @@
-// src/middleware/authMiddleware.js
+import AdminUser from '../models/AdminUser.js';
 
-export const requireLogin = (req, res, next) => {
-  if (req.session && req.session.userId) {
-    // If a session exists and has a userId, proceed to the next function
-    return next();
-  } else {
-    // If not, redirect to the login page
+// Middleware to ensure login and attach req.user
+export async function requireLogin(req, res, next) {
+  if (!req.session.userId) {
     return res.redirect('/auth/login');
   }
-};
+  try {
+    // Only fetch and attach user if not already present
+    if (!req.user) {
+      const user = await AdminUser.findByPk(req.session.userId);
+      if (!user) {
+        req.session.destroy(() => {});
+        return res.redirect('/auth/login');
+      }
+      req.user = user;
+    }
+    next();
+  } catch (err) {
+    // Optional: log error
+    req.session.destroy(() => {});
+    res.redirect('/auth/login');
+  }
+}

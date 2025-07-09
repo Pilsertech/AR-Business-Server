@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Admin Dashboard - All AR Content</title>
+  <link rel="stylesheet" href="/viewCss/dashboard-admin.css" />
+  <script src="/viewJs/dashboard-admin.js" defer></script>
+</head>
+<body>
+  <% if (success && success.length) { %>
+    <div class="flash-message success"><%= success[0] %></div>
+  <% } %>
+  <% if (error && error.length) { %>
+    <div class="flash-message error"><%= error[0] %></div>
+  <% } %>
+
+  <div class="header">
+    <h1>Admin Dashboard: All AR Content</h1>
+    <div class="header-buttons">
+      <a href="/dashboard/new" class="add-btn">＋ Add New Content</a>
+      <a href="/dashboard/manage-account" class="admin-btn">Manage Account</a>
+      <a href="/auth/logout" class="logout-btn">Logout</a>
+    </div>
+  </div>
+
+  <main>
+    <section>
+      <h2>All Content</h2>
+      <table class="ar-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Owner</th>
+            <th>Asset Type</th>
+            <th>AR Type</th>
+            <th>Marker Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (!contents.length) { %>
+            <tr><td colspan="6" class="no-content">No AR content found.</td></tr>
+          <% } %>
+          <% contents.forEach(item => { %>
+            <tr>
+              <td title="<%= item.description || '' %>"><%= item.title %></td>
+              <td><%= item.adminUser ? (item.adminUser.username || item.adminUser.email) : 'Unknown' %></td>
+              <td><%= item.assetType %></td>
+              <td><%= item.contentType %></td>
+              <td>
+                <% if (item.contentType === 'marker') { %>
+                  <% const files = Array.isArray(item.markerFiles)
+                         ? item.markerFiles
+                         : JSON.parse(item.markerFiles || '[]'); %>
+                  <% if (files.length) { %>
+                    <span class="status-ok"><%= files[0] %></span>
+                  <% } else { %>
+                    <span class="status-missing">Missing</span>
+                  <% } %>
+                <% } else { %> — <% } %>
+              </td>
+              <td>
+                <div class="btn-group">
+                  <a class="btn edit-btn" href="/dashboard/edit/<%= item.slug %>">Edit</a>
+                  <a class="btn qr-btn" href="<%= item.qrCodeUrl %>" download>Download QR</a>
+                  <form action="/dashboard/delete/<%= item.slug %>" method="POST" data-delete>
+                    <button type="submit" class="btn delete-btn">Delete</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </section>
+  </main>
+</body>
+</html>

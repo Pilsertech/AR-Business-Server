@@ -1,5 +1,3 @@
-// src/models/AdminUser.js
-
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
 import bcrypt from 'bcryptjs';
@@ -11,23 +9,72 @@ const AdminUser = sequelize.define('AdminUser', {
     primaryKey: true,
   },
   email: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(255),
     allowNull: false,
     unique: true,
-    validate: {
-      isEmail: true,
-    },
+    validate: { isEmail: true },
   },
   password: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(255),
     allowNull: false,
   },
-  // NEW: Locked flag
   locked: {
     type: DataTypes.BOOLEAN,
     allowNull: false,
     defaultValue: false,
-  }
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW,
+    field: 'createdAt',
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW,
+    field: 'updatedAt',
+  },
+  fullName: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+    defaultValue: '',
+  },
+  phone: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+    defaultValue: '',
+  },
+  country: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+    defaultValue: '',
+  },
+  city: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+    defaultValue: '',
+  },
+  username: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+    defaultValue: '',
+  },
+  isApproved: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
+  isMainAdmin: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
+  canWebEdit: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
 }, {
   tableName: 'admin_users',
   timestamps: true,

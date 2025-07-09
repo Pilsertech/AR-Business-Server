@@ -151,6 +151,10 @@ router.post('/manage-account', async (req, res) => {
     req.flash('error', 'Failed to update account.');
     res.redirect('/dashboard/manage-account');
   }
+
+  console.log('User:', req.user);// debuging line
 });
 
+
 export default router;
+
