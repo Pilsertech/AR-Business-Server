@@ -17,12 +17,11 @@ import adminRoutes from './routes/adminRoutes.js';
 import flash from 'connect-flash';
 import adminManageRoutes from './routes/adminManageRoutes.js';
 import webeditRoutes from './routes/webeditRoutes.js';
-import passport from './config/passport.js'; // <-- Add passport import
+import passport from './config/passport.js';
 
 dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
-const path = require('path');
 
 /* ── Middleware ─────────────────────────────────────────── */
 app.use(
@@ -93,20 +92,25 @@ app.use('/vendor', express.static(path.join(__dirname, '../public/vendor')));
 app.use('/viewCss', express.static(path.join(__dirname, 'views/viewCss')));
 app.use('/viewJs', express.static(path.join(__dirname, 'views/viewJs')));
 
-// NEW: Serve static files for website UI (css/js)
+// Serve static files for website UI (css/js)
 app.use('/website', express.static(path.join(__dirname, 'views/website')));
-// for managing admins
-app.use('/dashboard/admins', adminManageRoutes);
-app.use('/webedit', webeditRoutes);
 
 /* ── View engine (EJS) ─────────────────────────────────── */
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 
+/* ── Core and dashboard/admin routes ───────────────────── */
+app.use('/dashboard/admins', adminManageRoutes);
+app.use('/webedit', webeditRoutes);
+app.use('/auth', authRoutes); // login / logout / register
+app.use('/dashboard', dashboardRoutes);
+app.use('/api', arContentRoutes); // JSON CRUD
+app.use('/admins', adminRoutes);
+app.use('/', arContentRoutes); // /card/:slug page
 
 /* ── Website public routes ─────────────────────────────── */
 app.get('/website/', (req, res) => {
-  res.render('website/index', { /* any variables here */ });
+  res.render('website/index');
 });
 
 app.get('/website/ar-admins', async (req, res) => {
@@ -117,7 +121,7 @@ app.get('/website/ar-admins', async (req, res) => {
         isApproved: true,
         locked: false
       },
-      attributes: ['fullName', 'email', 'phone', 'country', 'city'] // update as per your model
+      attributes: ['fullName', 'email', 'phone', 'country', 'city']
     });
     res.render('website/ar-admins', { arAdmins });
   } catch (err) {
@@ -129,10 +133,6 @@ app.get('/website/ar-admins', async (req, res) => {
 
 app.get('/website/register-admin', (req, res) => {
   res.render('website/register-admin');
-});
-
-app.get('/webedit/editor-dashboard', (req, res) => {
-  res.render('webedit/editor-dashboard'); // Pass variables as second argument if needed
 });
 
 app.post('/website/register-admin', async (req, res) => {
@@ -165,12 +165,10 @@ app.post('/website/register-admin', async (req, res) => {
   }
 });
 
-/* ── Main app routes ───────────────────────────────────── */
-app.use('/auth', authRoutes); // login / logout / register
-app.use('/dashboard', dashboardRoutes);
-app.use('/api', arContentRoutes); // JSON CRUD
-app.use('/admins', adminRoutes);
-app.use('/', arContentRoutes); // /card/:slug page
+/* ── Webedit EJS route ─────────────────────────────────── */
+app.get('/webedit/editor-dashboard', (req, res) => {
+  res.render('webedit/editor-dashboard');
+});
 
 /* ── Health check ─────────────────────────────────────── */
 app.get('/', (_req, res) => res.send('AR Business Server 2.1 – OK'));
