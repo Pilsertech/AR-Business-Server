@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
+import fsPromises from 'fs/promises';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 
@@ -19,10 +20,11 @@ import flash from 'connect-flash';
 import adminManageRoutes from './routes/adminManageRoutes.js';
 import webeditRoutes from './routes/webeditRoutes.js';
 import passport from './config/passport.js';
-import { renderWebedit } from './utils/webeditRender.js'; // <-- Use the helper
+import { renderWebedit } from './utils/webeditRender.js';
 
 dotenv.config();
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const app = express();
 
 /* ── Middleware ─────────────────────────────────────────── */
@@ -106,8 +108,12 @@ async function ensureAdminAuthenticated(req, res, next) {
   try {
     const user = await AdminUser.findByPk(req.user.id);
     if (
-      user && (
+      user &&
+      (
         user.username === 'admin' ||
+        user.isMainAdmin === true ||
+        user.canWebEdit === true ||
+        user.isAuthorised === true ||
         (user.isApproved === true && user.locked === false)
       )
     ) {
@@ -205,7 +211,17 @@ app.post('/webedit/login',
     failureFlash: true
   }),
   (req, res) => {
-    if (req.user && (req.user.username === 'admin' || (req.user.isApproved && !req.user.locked))) {
+    // DEBUG: show user after login
+    console.log('User after login:', req.user);
+    if (
+      req.user && (
+        req.user.username === 'admin' ||
+        req.user.isMainAdmin === true ||
+        req.user.canWebEdit === true ||
+        req.user.isAuthorised === true ||
+        (req.user.isApproved === true && req.user.locked === false)
+      )
+    ) {
       res.redirect('/webedit/editor-dashboard');
     } else {
       req.logout(() => {});
@@ -236,10 +252,34 @@ app.get('/webedit', (req, res, next) => {
 });
 
 // Protected dashboard for webedit (renders from src/webedit/editor-dashboard.ejs)
-app.get('/webedit/editor-dashboard', ensureAdminAuthenticated, (req, res) => {
-  renderWebedit(res, 'editor-dashboard', {
-    user: req.user
-  });
+app.get('/webedit/editor-dashboard', ensureAdminAuthenticated, async (req, res) => {
+  // Match webeditRoutes.js SAFE_ROOTS!
+  const SAFE_ROOTS = [
+    path.resolve(__dirname, 'views'),
+    path.resolve(__dirname, '../public')
+  ];
+  const folder = SAFE_ROOTS[0];
+  try {
+    const files = await fsPromises.readdir(folder, { withFileTypes: true });
+    renderWebedit(res, 'editor-dashboard', {
+      user: req.user,
+      folder,
+      files,
+      SAFE_ROOTS,
+      path, // <--- pass path module
+      encodeURIComponent // <--- pass encodeURIComponent function
+    });
+  } catch (e) {
+    renderWebedit(res, 'editor-dashboard', {
+      user: req.user,
+      folder,
+      files: [],
+      SAFE_ROOTS,
+      error: ['Failed to read folder'],
+      path,
+      encodeURIComponent
+    });
+  }
 });
 
 // Attach the rest of webedit routes (must be last for /webedit/*)
@@ -277,7 +317,10 @@ app.use((err, req, res, next) => {
         city: 'YourCity',
         username: 'admin',
         isApproved: true,
-        locked: false
+        locked: false,
+        isMainAdmin: true,
+        canWebEdit: true,
+        isAuthorised: true
       });
       console.log('✅ Default admin user created: admin@example.com');
     }

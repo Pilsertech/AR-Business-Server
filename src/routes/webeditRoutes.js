@@ -55,7 +55,9 @@ router.get('/', requireWebEditAccess, async (req, res) => {
     renderWebedit(res, 'editor-dashboard', {
       folder: absFolder,
       files,
-      SAFE_ROOTS
+      SAFE_ROOTS,
+      path, // Pass path for EJS
+      encodeURIComponent // Pass encodeURIComponent for EJS
     });
   } catch (e) {
     res.status(500).send('Cannot read folder');
