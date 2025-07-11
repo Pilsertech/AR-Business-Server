@@ -1,83 +1,53 @@
 import { Router } from 'express';
 import fs from 'fs/promises';
 import path from 'path';
-import multer from 'multer';
-import { v4 as uuidv4 } from 'uuid';
 import { renderWebedit } from '../utils/webeditRender.js';
+import elfinderNode from 'elfinder-node'; // CommonJS default import
 
-// elFinder Node.js connector (install with: npm install @sosukesuzuki/elfinder-node-express)
-import elFinder from '@sosukesuzuki/elfinder-node-express';
+// Import your AdminUser model for authentication
+import AdminUser from '../models/AdminUser.js';
 
-// File root directories (edit as needed)
-const SAFE_ROOTS = [
-  { alias: 'Views', path: path.resolve('src/views') },
-  { alias: 'Public', path: path.resolve('public') }
-];
-
-// Check if the file/folder path is within allowed roots
-function isSafePath(filepath) {
-  const full = path.resolve(filepath);
-  return SAFE_ROOTS.some(root => full.startsWith(root.path));
-}
-
-// Multer for media uploads
-const upload = multer({ dest: 'tmp_uploads/' });
-
-/**
- * Middleware: Allow main admin OR trusted users (canWebEdit)
- */
-function requireWebEditAccess(req, res, next) {
-  if (req.user && (req.user.isMainAdmin || req.user.canWebEdit)) return next();
-  return res.status(403).send('Forbidden');
-}
-
-/**
- * (Optional) Restrict trusted users to only certain subfolders
- * Here we allow trusted users only in public/upload and its subfolders
- * Main admin has full access. Adjust logic as needed.
- */
-function isFolderAllowed(folder, user) {
-  if (user.isMainAdmin) return true;
-  if (user.canWebEdit) {
-    const allowedRoot = path.resolve('public/upload');
-    return path.resolve(folder).startsWith(allowedRoot);
+// Secure admin-only middleware (same logic as in app.js)
+async function ensureAdminAuthenticated(req, res, next) {
+  if (!req.isAuthenticated || !req.isAuthenticated()) {
+    req.flash?.('error', 'Please log in as an approved admin.');
+    return res.redirect('/webedit/login');
   }
-  return false;
+  try {
+    const user = await AdminUser.findByPk(req.user.id);
+    if (
+      user &&
+      (
+        user.username === 'admin' ||
+        user.isMainAdmin === true ||
+        user.canWebEdit === true ||
+        user.isAuthorised === true ||
+        (user.isApproved === true && user.locked === false)
+      )
+    ) {
+      req.user = user;
+      return next();
+    }
+    req.flash?.('error', 'You are not authorized to access this page.');
+    return res.redirect('/webedit/login');
+  } catch (e) {
+    console.error(e);
+    req.flash?.('error', 'Authentication failed.');
+    return res.redirect('/webedit/login');
+  }
 }
 
 const router = Router();
 
-/* ────── Serve elFinder static client assets ────── */
-router.use('/elfinder', requireWebEditAccess, (req, res, next) => {
-  // Serve elFinder client (should be at public/vendor/elfinder)
-  // (Mount this route after express.static for public)
-  express.static(path.resolve('public/vendor/elfinder'))(req, res, next);
-});
-
-/* ────── elFinder backend connector ────── */
-router.all('/elfinder/connector', requireWebEditAccess, elFinder({
-  roots: SAFE_ROOTS.map(root => ({
-    driver: elFinder.LocalFileSystem,
-    path: root.path,
-    alias: root.alias,
-    // Optionally: add uploadAllow, uploadDeny, uploadOrder, accessControl, etc.
-    // See elFinder docs for more config options
-  })),
-}));
-
 /* ────── Render dashboard page with elFinder embedded ────── */
-router.get('/', requireWebEditAccess, async (req, res) => {
-  // Render a page that loads elFinder in a div
-  renderWebedit(res, 'editor-dashboard-elfinder', {
+router.get('/', ensureAdminAuthenticated, (req, res) => {
+  renderWebedit(res, 'editor-dashboard', {
     user: req.user
   });
 });
 
-/* ────── (Optional) Legacy AJAX/file/folder endpoints, if you want to keep EJS-based editor as fallback ────── */
-// ...keep your previous AJAX endpoints, file/folder create/delete, audit, etc...
-
 /* ────── AUDIT LOG ────── */
-router.get('/audit', requireWebEditAccess, async (req, res) => {
+router.get('/audit', ensureAdminAuthenticated, async (req, res) => {
   try {
     const logPath = path.resolve('audit/file_audit.log');
     let logs = [];
@@ -91,6 +61,15 @@ router.get('/audit', requireWebEditAccess, async (req, res) => {
   }
 });
 
+/* ────── elFinder Node.js Connector ────── */
+router.all('/webedit/connector',ensureAdminAuthenticated, elfinderNode([
+  {
+    driver: 'LocalFileSystem',
+    path: path.resolve(process.cwd(), 'storage/files'),
+    URL: '/files/'
+  }
+]));
+
 /* ────── UTIL: AUDIT LOGGER ────── */
 async function logAudit(user, action, file, oldContent, newContent) {
   const logPath = path.resolve('audit/file_audit.log');
@@ -101,7 +80,7 @@ async function logAudit(user, action, file, oldContent, newContent) {
     file,
     oldContent: (typeof oldContent === 'string' && oldContent.length < 5000) ? oldContent : undefined,
     newContent: (typeof newContent === 'string' && newContent.length < 5000) ? newContent : undefined,
-    id: uuidv4()
+    id: require('crypto').randomUUID?.() || require('uuid').v4()
   };
   await fs.mkdir(path.dirname(logPath), { recursive: true });
   await fs.appendFile(logPath, JSON.stringify(entry) + '\n');

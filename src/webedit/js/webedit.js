@@ -1,6 +1,9 @@
 // Webedit File Explorer + Main Panel Logic
+// (Legacy UI: If you now rely on elFinder, you may not need most of this file!)
+// You can keep it for non-elFinder areas, or clean up unused code.
+
 document.addEventListener('DOMContentLoaded', function() {
-  // AJAX create file/folder
+  // Only run legacy logic if the legacy elements are present
   const createForm = document.getElementById('create-form');
   if (createForm) {
     createForm.addEventListener('submit', async function(e) {
@@ -12,7 +15,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Folder tree: fetch and render recursively
   async function fetchFolderTree(root, ul) {
     const res = await fetch(`/webedit/list-folders?root=${encodeURIComponent(root)}`);
     if (!res.ok) return;
@@ -41,14 +43,13 @@ document.addEventListener('DOMContentLoaded', function() {
     return ul;
   }
 
-  // Load folder content via AJAX
   async function loadFolder(folderPath) {
     const res = await fetch(`/webedit/ajax-list?folder=${encodeURIComponent(folderPath)}`);
     if (!res.ok) return alert("Failed to load folder");
     const { files, folder } = await res.json();
     window.WEBEDIT.currentFolder = folder;
-    // Update file list
     const fileList = document.getElementById('file-list');
+    if (!fileList) return;
     fileList.innerHTML = '';
     files.forEach(file => {
       const li = document.createElement('li');
@@ -73,14 +74,11 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       fileList.appendChild(li);
     });
-    // Update breadcrumbs and current folder display
     document.getElementById('current-folder').textContent = folder;
     updateBreadcrumbs(folder);
-    // Update create form folder input
     document.querySelector('#create-form input[name="folder"]').value = folder;
   }
 
-  // Breadcrumbs
   function updateBreadcrumbs(folder) {
     const bc = document.getElementById('breadcrumbs');
     if (!bc) return;
@@ -101,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Initial render of folder tree
+  // Only run these if legacy UI is present
   const folderTree = document.getElementById('folder-tree');
   if (folderTree && window.WEBEDIT && window.WEBEDIT.SAFE_ROOTS) {
     window.WEBEDIT.SAFE_ROOTS.forEach(root => {
@@ -109,10 +107,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Initial breadcrumbs update
   updateBreadcrumbs(window.WEBEDIT.currentFolder);
 
-  // Support file edit and upload forms as before
   const editForm = document.getElementById('edit-form');
   if (editForm) {
     editForm.addEventListener('submit', async function(e) {

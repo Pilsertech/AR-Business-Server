@@ -2,7 +2,29 @@
 <html>
 <head>
   <title>Web File Editor</title>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
   <link rel="stylesheet" href="/webedit/css/webedit.css" />
+
+  <!-- jQuery UI CSS (local, in /vendor/elfinder/jquery/) -->
+  <link rel="stylesheet" href="/vendor/elfinder/jquery/jquery-ui.css">
+
+  <!-- elFinder CSS (core + theme) -->
+  <link rel="stylesheet" href="/vendor/elfinder/css/elfinder.min.css">
+  <link rel="stylesheet" href="/vendor/elfinder/css/theme.css">
+
+  
+
+  <!-- jQuery and jQuery UI (both in /vendor/elfinder/jquery/) -->
+  <script src="/vendor/elfinder/jquery/jquery-3.7.1.js"></script>
+  <script src="/vendor/elfinder/jquery/jquery-ui.js"></script>
+
+  <!-- elFinder main JS (minified) -->
+  <script src="/vendor/elfinder/js/elfinder.min.js"></script>
+
+  <!-- Your elFinder initialization script -->
+  <script src="/webedit/js/elfinder-init.js"></script>
 </head>
 <body>
   <div class="webedit-header">
@@ -16,54 +38,14 @@
       <a href="/webedit/audit" class="btn">Audit Log</a>
     </div>
   </div>
-  <div class="webedit-body">
-    <aside class="webedit-sidebar">
-      <h3>Folders</h3>
-      <ul id="folder-tree" class="folder-tree"></ul>
+  <div class="webedit-body" style="display: flex; gap: 24px;">
+    <aside class="webedit-sidebar" style="min-width: 220px;">
+      <h3>elFinder File Manager</h3>
+      <!-- You can add more navigation links/buttons here if needed -->
     </aside>
-    <main class="webedit-main">
-      <div class="breadcrumbs" id="breadcrumbs"></div>
-      <h2>Folder: <span id="current-folder"><%= folder %></span></h2>
-      <ul class="file-list" id="file-list">
-        <% for (const file of files) { %>
-          <li>
-            <% if (file.isDirectory()) { %>
-              <span>📁</span>
-              <a href="#" class="folder-link" data-folder="<%= encodeURIComponent(path.join(folder, file.name)) %>"><%= file.name %></a>
-              <form method="POST" action="/webedit/delete" style="display:inline" onsubmit="return confirm('Delete folder and all content?');">
-                <input type="hidden" name="target" value="<%= path.join(folder, file.name) %>" />
-                <button type="submit" class="btn-delete">Delete</button>
-              </form>
-            <% } else { %>
-              <span>📄</span>
-              <a href="/webedit/view?file=<%= encodeURIComponent(path.join(folder, file.name)) %>"><%= file.name %></a>
-              <form method="POST" action="/webedit/delete" style="display:inline" onsubmit="return confirm('Delete this file?');">
-                <input type="hidden" name="target" value="<%= path.join(folder, file.name) %>" />
-                <button type="submit" class="btn-delete">Delete</button>
-              </form>
-            <% } %>
-          </li>
-        <% } %>
-      </ul>
-      <hr/>
-      <form id="create-form">
-        <input type="hidden" name="folder" value="<%= folder %>"/>
-        <input name="name" placeholder="New file or folder name" required />
-        <select name="type">
-          <option value="file">File</option>
-          <option value="folder">Folder</option>
-        </select>
-        <button type="submit">Create</button>
-      </form>
+    <main class="webedit-main" style="flex: 1;">
+      <div id="elfinder"></div>
     </main>
   </div>
-  <script>
-    // These are passed from server, for use in JS
-    window.WEBEDIT = {
-      SAFE_ROOTS: <%- JSON.stringify(SAFE_ROOTS) %>,
-      currentFolder: "<%- folder %>"
-    };
-  </script>
-  <script src="/webedit/js/webedit.js"></script>
 </body>
 </html>

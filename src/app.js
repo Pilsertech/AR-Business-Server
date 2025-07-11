@@ -22,6 +22,13 @@ import webeditRoutes from './routes/webeditRoutes.js';
 import passport from './config/passport.js';
 import { renderWebedit } from './utils/webeditRender.js';
 
+// ---- Add this import for the proxy middleware ----
+import { createProxyMiddleware } from 'http-proxy-middleware';
+
+// ---- Import elfinder-node connector (CommonJS default export!) ----
+import elfinderNode from 'elfinder-node'; // DO NOT destructure
+// Use elfinderNode directly as the middleware function
+
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -94,6 +101,9 @@ app.use('/viewJs', express.static(path.join(__dirname, 'views/viewJs')));
 app.use('/website', express.static(path.join(__dirname, 'views/website')));
 app.use('/webedit/css', express.static(path.join(__dirname, 'webedit/css')));
 app.use('/webedit/js', express.static(path.join(__dirname, 'webedit/js')));
+
+/* ── Add static serving for elFinder managed files ───────── */
+app.use('/files', express.static(path.join(__dirname, '../storage/files')));
 
 /* ── View engine (EJS) ─────────────────────────────────── */
 app.set('views', path.join(__dirname, 'views'));
@@ -281,6 +291,29 @@ app.get('/webedit/editor-dashboard', ensureAdminAuthenticated, async (req, res) 
     });
   }
 });
+
+// ---- elFinder PHP connector proxy for admin users only ----
+app.use(
+  '/webedit/elfinder/php/connector-proxy',
+  ensureAdminAuthenticated, // Only allow logged-in admins
+  createProxyMiddleware({
+    target: 'http://localhost:8000', // Your PHP server
+    changeOrigin: true,
+    pathRewrite: {
+      '^/webedit/elfinder/php/connector-proxy': '/php/connector.php',
+    },
+  })
+);
+
+/* ── Add elFinder Node.js connector route (admin only) ───── */
+/* ────── Correct usage for your elfinder-node version ────── */
+app.all('/webedit/connector', ensureAdminAuthenticated, elfinderNode([
+  {
+    driver: 'LocalFileSystem',
+    path: path.resolve(__dirname, '../storage/files'),
+    URL: '/files/'
+  }
+]));
 
 // Attach the rest of webedit routes (must be last for /webedit/*)
 app.use('/webedit', webeditRoutes);
