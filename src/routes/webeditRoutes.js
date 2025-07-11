@@ -3,18 +3,21 @@ import fs from 'fs/promises';
 import path from 'path';
 import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
-import { renderWebedit } from '../utils/webeditRender.js'; // Helper for webedit EJS rendering
+import { renderWebedit } from '../utils/webeditRender.js';
+
+// elFinder Node.js connector (install with: npm install @sosukesuzuki/elfinder-node-express)
+import elFinder from '@sosukesuzuki/elfinder-node-express';
 
 // File root directories (edit as needed)
 const SAFE_ROOTS = [
-  path.resolve('src/views'),
-  path.resolve('public')
+  { alias: 'Views', path: path.resolve('src/views') },
+  { alias: 'Public', path: path.resolve('public') }
 ];
 
 // Check if the file/folder path is within allowed roots
 function isSafePath(filepath) {
   const full = path.resolve(filepath);
-  return SAFE_ROOTS.some(root => full.startsWith(root));
+  return SAFE_ROOTS.some(root => full.startsWith(root.path));
 }
 
 // Multer for media uploads
@@ -44,137 +47,36 @@ function isFolderAllowed(folder, user) {
 
 const router = Router();
 
-/* ───────────── LIST FILES ───────────── */
+/* ────── Serve elFinder static client assets ────── */
+router.use('/elfinder', requireWebEditAccess, (req, res, next) => {
+  // Serve elFinder client (should be at public/vendor/elfinder)
+  // (Mount this route after express.static for public)
+  express.static(path.resolve('public/vendor/elfinder'))(req, res, next);
+});
+
+/* ────── elFinder backend connector ────── */
+router.all('/elfinder/connector', requireWebEditAccess, elFinder({
+  roots: SAFE_ROOTS.map(root => ({
+    driver: elFinder.LocalFileSystem,
+    path: root.path,
+    alias: root.alias,
+    // Optionally: add uploadAllow, uploadDeny, uploadOrder, accessControl, etc.
+    // See elFinder docs for more config options
+  })),
+}));
+
+/* ────── Render dashboard page with elFinder embedded ────── */
 router.get('/', requireWebEditAccess, async (req, res) => {
-  const folder = req.query.folder || SAFE_ROOTS[0];
-  const absFolder = path.resolve(folder);
-  if (!isSafePath(absFolder) || !isFolderAllowed(absFolder, req.user))
-    return res.status(403).send('Forbidden (folder access)');
-  try {
-    const files = await fs.readdir(absFolder, { withFileTypes: true });
-    renderWebedit(res, 'editor-dashboard', {
-      folder: absFolder,
-      files,
-      SAFE_ROOTS,
-      path, // Pass path for EJS
-      encodeURIComponent // Pass encodeURIComponent for EJS
-    });
-  } catch (e) {
-    res.status(500).send('Cannot read folder');
-  }
+  // Render a page that loads elFinder in a div
+  renderWebedit(res, 'editor-dashboard-elfinder', {
+    user: req.user
+  });
 });
 
-/* ───────────── VIEW FILE ───────────── */
-router.get('/view', requireWebEditAccess, async (req, res) => {
-  const file = req.query.file;
-  if (!file || !isSafePath(file) || !isFolderAllowed(path.dirname(file), req.user))
-    return res.status(403).send('Forbidden (file access)');
-  try {
-    const stat = await fs.stat(file);
-    if (stat.isDirectory()) return res.redirect(`/webedit?folder=${file}`);
-    const ext = path.extname(file).toLowerCase();
-    let content = '';
-    let isBinary = false;
-    if (['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.mp4', '.webm'].includes(ext)) {
-      isBinary = true;
-    } else {
-      content = await fs.readFile(file, 'utf-8');
-    }
-    renderWebedit(res, 'file-viewer', {
-      file, content, isBinary, ext
-    });
-  } catch (e) {
-    res.status(500).send('Cannot open file');
-  }
-});
+/* ────── (Optional) Legacy AJAX/file/folder endpoints, if you want to keep EJS-based editor as fallback ────── */
+// ...keep your previous AJAX endpoints, file/folder create/delete, audit, etc...
 
-/* ───────────── EDIT FILE (GET) ───────────── */
-router.get('/edit', requireWebEditAccess, async (req, res) => {
-  const file = req.query.file;
-  if (!file || !isSafePath(file) || !isFolderAllowed(path.dirname(file), req.user))
-    return res.status(403).send('Forbidden (file access)');
-  try {
-    const content = await fs.readFile(file, 'utf-8');
-    renderWebedit(res, 'file-viewer', {
-      file, content, isBinary: false, editing: true
-    });
-  } catch (e) {
-    res.status(500).send('Cannot open file');
-  }
-});
-
-/* ───────────── UPDATE FILE (POST) ───────────── */
-router.post('/save', requireWebEditAccess, async (req, res) => {
-  const { file, content } = req.body;
-  if (!file || !isSafePath(file) || !isFolderAllowed(path.dirname(file), req.user))
-    return res.status(403).send('Forbidden (file access)');
-  try {
-    const oldContent = await fs.readFile(file, 'utf-8');
-    await fs.writeFile(file, content, 'utf-8');
-    logAudit(req.user, 'edit', file, oldContent, content);
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ success: false, error: 'Failed to save file' });
-  }
-});
-
-/* ───────────── UPLOAD/REPLACE MEDIA ───────────── */
-router.post('/upload', requireWebEditAccess, upload.single('media'), async (req, res) => {
-  const { destPath } = req.body;
-  if (!destPath || !isSafePath(destPath) || !isFolderAllowed(path.dirname(destPath), req.user))
-    return res.status(403).send('Forbidden (upload access)');
-  try {
-    await fs.copyFile(req.file.path, destPath);
-    await fs.unlink(req.file.path);
-    logAudit(req.user, 'upload', destPath);
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ success: false, error: 'Upload failed' });
-  }
-});
-
-/* ───────────── CREATE FILE/FOLDER ───────────── */
-router.post('/create', requireWebEditAccess, async (req, res) => {
-  const { folder, name, type } = req.body;
-  const absFolder = path.resolve(folder);
-  if (!isSafePath(absFolder) || !isFolderAllowed(absFolder, req.user))
-    return res.status(403).send('Forbidden (folder access)');
-  const newPath = path.join(absFolder, name);
-  try {
-    if (type === 'folder') {
-      await fs.mkdir(newPath);
-      logAudit(req.user, 'mkdir', newPath);
-    } else {
-      await fs.writeFile(newPath, '', 'utf-8');
-      logAudit(req.user, 'create', newPath);
-    }
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ success: false, error: 'Create failed' });
-  }
-});
-
-/* ───────────── DELETE FILE/FOLDER ───────────── */
-router.post('/delete', requireWebEditAccess, async (req, res) => {
-  const { target } = req.body;
-  if (!target || !isSafePath(target) || !isFolderAllowed(path.dirname(target), req.user))
-    return res.status(403).send('Forbidden (delete access)');
-  try {
-    const stat = await fs.stat(target);
-    if (stat.isDirectory()) {
-      await fs.rm(target, { recursive: true, force: true });
-      logAudit(req.user, 'rmdir', target);
-    } else {
-      await fs.unlink(target);
-      logAudit(req.user, 'delete', target);
-    }
-    res.json({ success: true });
-  } catch (e) {
-    res.status(500).json({ success: false, error: 'Delete failed' });
-  }
-});
-
-/* ───────────── AUDIT LOG ───────────── */
+/* ────── AUDIT LOG ────── */
 router.get('/audit', requireWebEditAccess, async (req, res) => {
   try {
     const logPath = path.resolve('audit/file_audit.log');
@@ -189,7 +91,7 @@ router.get('/audit', requireWebEditAccess, async (req, res) => {
   }
 });
 
-/* ───────────── UTIL: AUDIT LOGGER ───────────── */
+/* ────── UTIL: AUDIT LOGGER ────── */
 async function logAudit(user, action, file, oldContent, newContent) {
   const logPath = path.resolve('audit/file_audit.log');
   const entry = {

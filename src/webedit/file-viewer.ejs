@@ -7,10 +7,28 @@
 <body>
   <div class="webedit-header">
     <h1>View/Edit File</h1>
-    <nav>
-      <a href="/webedit?folder=<%= encodeURIComponent(require('path').dirname(file)) %>">Back to Folder</a>
+    <nav class="webedit-fileviewer-nav">
+      <% 
+        // Provide a breadcrumb navigation for folders
+        const relPath = file.replace(/^.*?(public|src[\\/](?:views|webedit))/, '$1');
+        const sep = relPath.includes('\\') ? '\\' : '/';
+        const crumbs = relPath.split(/[\\/]/).filter(Boolean);
+        let curr = '';
+      %>
+      <a href="/webedit?folder=<%= encodeURIComponent(path.resolve('public')) %>">public</a>
+      <% for (let i = 1; i < crumbs.length - 1; i++) { 
+        curr += (curr ? sep : '') + crumbs[i];
+      %>
+        <span>/</span>
+        <a href="/webedit?folder=<%= encodeURIComponent(path.resolve('public', curr)) %>"><%= crumbs[i] %></a>
+      <% } %>
+      <span>/</span>
+      <span class="fileviewer-nav-current"><%= crumbs[crumbs.length - 1] %></span>
+      |
       <a href="/webedit/audit">Audit Log</a>
       <a href="/dashboard">Dashboard</a>
+      <a href="/webedit/logout" class="btn btn-logout">Logout</a>
+      <a href="/website/" class="btn btn-public">Public Site</a>
     </nav>
   </div>
   <div class="webedit-main">
@@ -23,23 +41,23 @@
         <button type="submit">Upload/Replace</button>
       </form>
       <% if (['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'].includes(ext)) { %>
-        <img src="<%= file.replace(/^public/, '') %>" style="max-width:600px;" />
+        <img src="<%= file.replace(/^public/, '') %>" class="fileviewer-preview-img" />
       <% } %>
       <% if (['.mp4', '.webm'].includes(ext)) { %>
-        <video controls style="max-width:600px;">
+        <video controls class="fileviewer-preview-video">
           <source src="<%= file.replace(/^public/, '') %>">
         </video>
       <% } %>
     <% } else { %>
       <% if (editing) { %>
         <form id="edit-form">
-          <textarea name="content" style="width:95%;height:420px;"><%= content %></textarea>
+          <textarea name="content" class="fileviewer-editor"><%= content %></textarea>
           <input type="hidden" name="file" value="<%= file %>"/>
-          <button type="submit">Save Changes</button>
+          <button type="submit" class="btn btn-save">Save Changes</button>
         </form>
       <% } else { %>
-        <pre style="white-space:pre-wrap;background:#f9f9f9;padding:1em;"><%= content %></pre>
-        <a href="/webedit/edit?file=<%= encodeURIComponent(file) %>">Edit this file</a>
+        <pre class="fileviewer-content"><%= content %></pre>
+        <a href="/webedit/edit?file=<%= encodeURIComponent(file) %>" class="btn btn-edit">Edit this file</a>
       <% } %>
     <% } %>
   </div>

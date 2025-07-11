@@ -7,45 +7,63 @@
 <body>
   <div class="webedit-header">
     <h1>Web File Editor</h1>
-    <nav>
-      <a href="/webedit/audit">Audit Log</a>
-      <a href="/dashboard">Back to Dashboard</a>
-    </nav>
-  </div>
-  <div class="webedit-main">
-    <h2>Folder: <%= folder %></h2>
-    <ul class="file-list">
-      <% for (const file of files) { %>
-        <li>
-          <% if (file.isDirectory()) { %>
-            <span>📁</span>
-            <a href="/webedit?folder=<%= encodeURIComponent(path.join(folder, file.name)) %>"><%= file.name %></a>
-            <form method="POST" action="/webedit/delete" style="display:inline" onsubmit="return confirm('Delete folder and all content?');">
-              <input type="hidden" name="target" value="<%= path.join(folder, file.name) %>" />
-              <button type="submit" class="btn-delete">Delete</button>
-            </form>
-          <% } else { %>
-            <span>📄</span>
-            <a href="/webedit/view?file=<%= encodeURIComponent(path.join(folder, file.name)) %>"><%= file.name %></a>
-            <form method="POST" action="/webedit/delete" style="display:inline" onsubmit="return confirm('Delete this file?');">
-              <input type="hidden" name="target" value="<%= path.join(folder, file.name) %>" />
-              <button type="submit" class="btn-delete">Delete</button>
-            </form>
-          <% } %>
-        </li>
+    <div class="webedit-dashboard-topbar">
+      <a href="/webedit/logout" class="btn btn-logout">Logout</a>
+      <% if (user && user.isMainAdmin) { %>
+        <a href="/dashboard" class="btn btn-admin">Admin Dashboard</a>
       <% } %>
-    </ul>
-    <hr/>
-    <form id="create-form">
-      <input type="hidden" name="folder" value="<%= folder %>"/>
-      <input name="name" placeholder="New file or folder name" required />
-      <select name="type">
-        <option value="file">File</option>
-        <option value="folder">Folder</option>
-      </select>
-      <button type="submit">Create</button>
-    </form>
+      <a href="/website/" class="btn btn-public">Public Website</a>
+      <a href="/webedit/audit" class="btn">Audit Log</a>
+    </div>
   </div>
+  <div class="webedit-body">
+    <aside class="webedit-sidebar">
+      <h3>Folders</h3>
+      <ul id="folder-tree" class="folder-tree"></ul>
+    </aside>
+    <main class="webedit-main">
+      <div class="breadcrumbs" id="breadcrumbs"></div>
+      <h2>Folder: <span id="current-folder"><%= folder %></span></h2>
+      <ul class="file-list" id="file-list">
+        <% for (const file of files) { %>
+          <li>
+            <% if (file.isDirectory()) { %>
+              <span>📁</span>
+              <a href="#" class="folder-link" data-folder="<%= encodeURIComponent(path.join(folder, file.name)) %>"><%= file.name %></a>
+              <form method="POST" action="/webedit/delete" style="display:inline" onsubmit="return confirm('Delete folder and all content?');">
+                <input type="hidden" name="target" value="<%= path.join(folder, file.name) %>" />
+                <button type="submit" class="btn-delete">Delete</button>
+              </form>
+            <% } else { %>
+              <span>📄</span>
+              <a href="/webedit/view?file=<%= encodeURIComponent(path.join(folder, file.name)) %>"><%= file.name %></a>
+              <form method="POST" action="/webedit/delete" style="display:inline" onsubmit="return confirm('Delete this file?');">
+                <input type="hidden" name="target" value="<%= path.join(folder, file.name) %>" />
+                <button type="submit" class="btn-delete">Delete</button>
+              </form>
+            <% } %>
+          </li>
+        <% } %>
+      </ul>
+      <hr/>
+      <form id="create-form">
+        <input type="hidden" name="folder" value="<%= folder %>"/>
+        <input name="name" placeholder="New file or folder name" required />
+        <select name="type">
+          <option value="file">File</option>
+          <option value="folder">Folder</option>
+        </select>
+        <button type="submit">Create</button>
+      </form>
+    </main>
+  </div>
+  <script>
+    // These are passed from server, for use in JS
+    window.WEBEDIT = {
+      SAFE_ROOTS: <%- JSON.stringify(SAFE_ROOTS) %>,
+      currentFolder: "<%- folder %>"
+    };
+  </script>
   <script src="/webedit/js/webedit.js"></script>
 </body>
 </html>

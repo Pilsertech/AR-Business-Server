@@ -100,3 +100,42 @@ footer {
   text-align: center;
   opacity: 0.7;
 }
+
+/* Add dashboard buttons styling for login-related pages too */
+.webedit-dashboard-topbar {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.webedit-dashboard-topbar .btn {
+  display: inline-block;
+  padding: 8px 16px;
+  background: #005da6;
+  color: #fff;
+  border-radius: 4px;
+  text-decoration: none;
+  transition: background 0.2s;
+  font-weight: 500;
+}
+.webedit-dashboard-topbar .btn:hover {
+  background: #003d6e;
+}
+.btn-logout {
+  background: #d9534f;
+}
+.btn-logout:hover {
+  background: #b52b27;
+}
+.btn-admin {
+  background: #7f7fd5;
+}
+.btn-admin:hover {
+  background: #4e4e9a;
+}
+.btn-public {
+  background: #57ad68;
+}
+.btn-public:hover {
+  background: #39844a;
+}
