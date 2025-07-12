@@ -307,7 +307,7 @@ app.use(
 
 /* ── Add elFinder Node.js connector route (admin only) ───── */
 /* ────── Correct usage for your elfinder-node version ────── */
-app.all('/webedit/connector', ensureAdminAuthenticated, elfinderNode([
+app.all('/connector', ensureAdminAuthenticated, elfinderNode([
   {
     driver: 'LocalFileSystem',
     path: path.resolve(__dirname, '../storage/files'),
