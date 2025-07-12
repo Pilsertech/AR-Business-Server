@@ -318,6 +318,8 @@ app.all('/webedit/connector', ensureAdminAuthenticated, elfinderNode([
 // Attach the rest of webedit routes (must be last for /webedit/*)
 app.use('/webedit', webeditRoutes);
 
+app.use('/files', express.static(path.join(process.cwd(), 'storage/files')));
+
 /* ── Health check ─────────────────────────────────────── */
 app.get('/', (_req, res) => res.send('AR Business Server 2.1 – OK'));
 

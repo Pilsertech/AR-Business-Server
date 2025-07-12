@@ -11,6 +11,10 @@ export async function requireLogin(req, res, next) {
 
   // Fallback: Check session-based login
   if (!req.session.userId) {
+    // Handle AJAX/XHR/API requests
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
     return res.redirect('/auth/login');
   }
   try {
@@ -18,6 +22,10 @@ export async function requireLogin(req, res, next) {
     const user = await AdminUser.findByPk(req.session.userId);
     if (!user) {
       req.session.destroy(() => {});
+      // Handle AJAX/XHR/API requests
+      if (req.xhr || req.headers.accept?.includes('application/json')) {
+        return res.status(401).json({ error: 'Not authenticated' });
+      }
       return res.redirect('/auth/login');
     }
     req.user = user;
@@ -26,6 +34,10 @@ export async function requireLogin(req, res, next) {
     // Optional: log error for debugging
     console.error('AuthMiddleware error:', err);
     req.session.destroy(() => {});
+    // Handle AJAX/XHR/API requests
+    if (req.xhr || req.headers.accept?.includes('application/json')) {
+      return res.status(500).json({ error: 'Authentication error' });
+    }
     res.redirect('/auth/login');
   }
 }
@@ -36,5 +48,9 @@ export async function requireLogin(req, res, next) {
  */
 export function requireMainAdmin(req, res, next) {
   if (req.user && req.user.isMainAdmin) return next();
+  // Handle AJAX/XHR/API requests
+  if (req.xhr || req.headers.accept?.includes('application/json')) {
+    return res.status(403).json({ error: 'Forbidden: Main admin only' });
+  }
   return res.status(403).send('Forbidden');
 }
